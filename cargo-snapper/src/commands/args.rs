@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
 
-use super::Init;
+use super::{Init, New};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
@@ -47,7 +47,7 @@ pub enum SubCmd {
     /// Init snapper project in current folder.
     Init(Init),
     /// Create new snapper project.
-    New,
+    New(New),
     /// Manage scripts.
     Script,
     /// Manage network.
@@ -67,10 +67,9 @@ pub enum SubCmd {
 impl SubCmd {
     pub fn execute(self) -> Result<()> {
         match self {
-            Self::Init(v) => v.execute()?,
-            _ => {}
+            Self::Init(v) => v.execute(),
+            Self::New(v) => v.execute(),
+            _ => Ok(()),
         }
-
-        Ok(())
     }
 }
