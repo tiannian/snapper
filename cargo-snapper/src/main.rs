@@ -2,7 +2,14 @@ use clap::Parser;
 use commands::Args;
 
 mod commands;
+mod utils;
 
 fn main() {
-    let _args = Args::parse();
+    env_logger::init();
+
+    let args = Args::parse();
+
+    if let Err(e) = args.execute() {
+        log::error!("{e}");
+    }
 }

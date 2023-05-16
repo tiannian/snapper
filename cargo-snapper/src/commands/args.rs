@@ -1,3 +1,4 @@
+use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 use super::Init;
@@ -7,6 +8,13 @@ use super::Init;
 pub struct Args {
     #[command(subcommand)]
     subcommand: SubCmd,
+}
+
+impl Args {
+    pub fn execute(self) -> Result<()> {
+        self.subcommand.execute()?;
+        Ok(())
+    }
 }
 
 #[derive(Subcommand, Debug)]
@@ -25,4 +33,19 @@ pub enum SubCmd {
     Compiler,
     /// Start a local node for testing.
     Node,
+    /// Show contract ABI
+    Abi,
+    /// Show Contract Metadata
+    Metadata,
+}
+
+impl SubCmd {
+    pub fn execute(self) -> Result<()> {
+        match self {
+            Self::Init(v) => v.execute()?,
+            _ => {}
+        }
+
+        Ok(())
+    }
 }
