@@ -8,7 +8,7 @@ Add these folder and files in cargo project.
 
 - contracts: Contracts files
 - Snapper.toml: Config file for snapper.
-- bins: Some scripts.
+- scripts: Some scripts.
 - tests: Tests
 - src: library
 
