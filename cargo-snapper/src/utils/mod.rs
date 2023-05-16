@@ -3,8 +3,8 @@ use std::fs;
 use anyhow::Result;
 use cargo_metadata::MetadataCommand;
 
-pub fn create_workdir() -> Result<()> {
-    let metadata = MetadataCommand::new().no_deps().exec()?;
+pub fn create_workdir(dir: &str) -> Result<()> {
+    let metadata = MetadataCommand::new().current_dir(dir).no_deps().exec()?;
 
     let root = metadata.workspace_root.into_std_path_buf();
 

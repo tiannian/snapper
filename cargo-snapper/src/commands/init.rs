@@ -37,7 +37,7 @@ impl Init {
         } else {
             log::info!("Create some folder");
 
-            create_workdir()?;
+            create_workdir(".")?;
         }
 
         Ok(())
