@@ -1,5 +1,5 @@
 use clap::Parser;
-use commands::Args;
+use commands::Arg;
 
 mod commands;
 mod utils;
@@ -7,7 +7,7 @@ mod utils;
 fn main() {
     env_logger::init();
 
-    let args = Args::parse();
+    let args = Arg::parse();
 
     if let Err(e) = args.execute() {
         log::error!("{e}");

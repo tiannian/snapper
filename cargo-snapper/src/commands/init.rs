@@ -21,6 +21,8 @@ impl Init {
 
         let mut cmd = Command::new(cargo);
 
+        cmd.arg("init").arg("--lib");
+
         if let Some(name) = self.name {
             cmd.arg("--name").arg(name);
         }

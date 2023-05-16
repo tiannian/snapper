@@ -1,19 +1,44 @@
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 
 use super::Init;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
-pub struct Args {
+/// Manage contract project
+pub struct Arg {
+    #[command(subcommand)]
+    subcommand: Snapper,
+}
+
+impl Arg {
+    pub fn execute(self) -> Result<()> {
+        self.subcommand.execute()
+    }
+}
+
+#[derive(Subcommand, Debug)]
+pub enum Snapper {
+    Snapper(SnapperRead),
+}
+
+impl Snapper {
+    pub fn execute(self) -> Result<()> {
+        match self {
+            Self::Snapper(v) => v.execute(),
+        }
+    }
+}
+
+#[derive(Debug, Args)]
+pub struct SnapperRead {
     #[command(subcommand)]
     subcommand: SubCmd,
 }
 
-impl Args {
+impl SnapperRead {
     pub fn execute(self) -> Result<()> {
-        self.subcommand.execute()?;
-        Ok(())
+        self.subcommand.execute()
     }
 }
 
