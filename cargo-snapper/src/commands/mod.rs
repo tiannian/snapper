@@ -6,3 +6,6 @@ pub use init::*;
 
 mod new;
 pub use new::*;
+
+mod script;
+pub use script::*;

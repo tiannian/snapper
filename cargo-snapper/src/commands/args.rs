@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
 
-use super::{Init, New};
+use super::{Init, New, Script};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
@@ -49,7 +49,7 @@ pub enum SubCmd {
     /// Create new snapper project.
     New(New),
     /// Manage scripts.
-    Script,
+    Script(Script),
     /// Manage network.
     Network,
     /// Manage library.
@@ -62,6 +62,8 @@ pub enum SubCmd {
     Abi,
     /// Show Contract Metadata
     Metadata,
+    /// Show all configure item by `Snapper.toml`
+    Config,
 }
 
 impl SubCmd {
@@ -69,6 +71,7 @@ impl SubCmd {
         match self {
             Self::Init(v) => v.execute(),
             Self::New(v) => v.execute(),
+            Self::Script(v) => v.execute(),
             _ => Ok(()),
         }
     }
