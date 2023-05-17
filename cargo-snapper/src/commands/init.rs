@@ -1,9 +1,9 @@
-use std::{env, process::Command};
+use std::{env, path::Path, process::Command};
 
 use anyhow::Result;
 use clap::Args;
 
-use crate::utils::create_workdir;
+use crate::utils;
 
 #[derive(Debug, Args)]
 pub struct Init {
@@ -37,7 +37,7 @@ impl Init {
         } else {
             log::info!("Create some folder");
 
-            create_workdir(".")?;
+            utils::project::create(Path::new(&"."))?;
         }
 
         Ok(())
