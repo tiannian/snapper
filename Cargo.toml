@@ -2,4 +2,9 @@
 members = [
     "cargo-snapper",
     "core",
+    "ethers",
+    "node",
+    "provider",
+    "signers",
+    "solc",
 ]
