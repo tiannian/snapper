@@ -79,7 +79,3 @@ pub fn remove(path: &Path, script: &str) -> Result<()> {
     remove_manifest_bin(path, script)?;
     Ok(())
 }
-
-pub fn sync(path: &Path) -> Result<()> {
-    Ok(())
-}

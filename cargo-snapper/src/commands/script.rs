@@ -47,8 +47,6 @@ enum SubCmd {
     Create(ScriptName),
     /// Remove a script in `Cargo.toml`
     Remove(ScriptName),
-    /// Sync `Cargo.toml` using scripts.
-    Sync,
 }
 
 #[derive(Debug, Args)]
@@ -65,7 +63,6 @@ impl SubCmd {
         match self {
             Self::Create(n) => utils::scripts::create(&package_path, &n.name),
             Self::Remove(n) => utils::scripts::remove(&package_path, &n.name),
-            Self::Sync => utils::scripts::sync(package_path),
         }
     }
 }
