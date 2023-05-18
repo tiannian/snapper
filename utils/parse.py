@@ -22,7 +22,7 @@ def main():
         path = build["path"]
 
         art = {
-            "url": [ github_prefix % (platform, path) ],
+            "urls": [ github_prefix % (platform, path) ],
             "keccak256": keccak256,
             "sha256": sha256,
         }
