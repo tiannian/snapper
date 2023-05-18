@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
+use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
+use tokio::{fs::File, io::AsyncWriteExt};
 
 use crate::{Error, Result};
 
@@ -48,11 +50,21 @@ impl CompilerVersions {
         Ok(res)
     }
 
-    pub async fn download(&self, version: &str, platform: &Platform) -> Result<()> {
+    pub async fn download(&self, version: &str, platform: &Platform, target: &str) -> Result<()> {
         let artifact = self
             .builds
             .get(&format!("{}-{}", version, platform.to_str()))
             .ok_or(Error::NoTargetPlatform)?;
+
+        let mut response = reqwest::get(&artifact.urls[0]).await?.bytes_stream();
+
+        let mut file = File::create(target).await?;
+
+        while let Some(item) = response.next().await {
+            let bytes = item?;
+
+            file.write(&bytes).await?;
+        }
 
         Ok(())
     }
