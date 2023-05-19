@@ -62,8 +62,6 @@ impl CompilerVersions {
         let bin_path = path.join(format!("solc-v{}", version));
         let mut file = File::create(&bin_path).await?;
 
-        println!("{:?}", bin_path);
-
         while let Some(item) = response.next().await {
             let bytes = item?;
 
