@@ -59,7 +59,10 @@ impl CompilerVersions {
         let mut response = reqwest::get(&artifact.urls[0]).await?.bytes_stream();
 
         let path = Path::new(target);
-        let mut file = File::create(path.join(format!("solc-v{}", version))).await?;
+        let bin_path = path.join(format!("solc-v{}", version));
+        let mut file = File::create(&bin_path).await?;
+
+        println!("{:?}", bin_path);
 
         while let Some(item) = response.next().await {
             let bytes = item?;
