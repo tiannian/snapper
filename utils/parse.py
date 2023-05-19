@@ -2,7 +2,7 @@ import requests
 import sys
 import json
 
-github_prefix = "https://github.com/ethereum/solc-bin/raw/gh-pages/%s/%s"
+github_prefix = "https://raw.githubusercontent.com/ethereum/solc-bin/gh-pages/%s/%s"
 
 def main():
     verison_file = sys.argv[1]
