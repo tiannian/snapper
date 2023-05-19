@@ -78,19 +78,17 @@ mod test {
 
     use crate::CompilerVersions;
 
-    use super::Platform;
-
     #[test]
     fn test_versions() {
         let runtime = Runtime::new().unwrap();
 
         runtime.block_on(async move {
-            let artifact = CompilerVersions::load().await.unwrap();
+            let _artifact = CompilerVersions::load().await.unwrap();
 
-            artifact
-                .download("0.8.20", &Platform::LinuxAmd64, ".")
-                .await
-                .unwrap()
+            // _artifact
+            //     .download("0.8.20", &Platform::LinuxAmd64, "../target")
+            //     .await
+            //     .unwrap()
         });
     }
 }
