@@ -87,7 +87,7 @@ mod test {
             let artifact = CompilerVersions::load().await.unwrap();
 
             artifact
-                .download("0.8.20", &Platform::LinuxAmd64, "target")
+                .download("0.8.20", &Platform::LinuxAmd64, ".")
                 .await
                 .unwrap()
         });
