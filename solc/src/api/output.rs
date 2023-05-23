@@ -1,3 +1,5 @@
+//! Type collections for solc json api output
+
 use std::collections::HashMap;
 
 use primitive_types::U256;
@@ -288,7 +290,7 @@ pub struct Contract {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Output {
+pub struct CompilerOutput {
     pub errors: Vec<OutputError>,
     pub sources: HashMap<String, Source>,
     pub contracts: HashMap<String, HashMap<String, Contract>>,
@@ -298,7 +300,7 @@ pub struct Output {
 mod test {
     use tokio::runtime::Runtime;
 
-    use crate::Output;
+    use crate::CompilerOutput;
 
     #[test]
     fn test() {
@@ -306,7 +308,7 @@ mod test {
 
         let runtime = Runtime::new().unwrap();
         runtime.block_on(async move {
-            let obj: Output = serde_json::from_str(&config).unwrap();
+            let obj: CompilerOutput = serde_json::from_str(&config).unwrap();
             print!("{:#?}", obj);
         });
     }

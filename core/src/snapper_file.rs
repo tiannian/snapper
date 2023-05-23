@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Config {
+pub struct SnapperFile {
     pub solidity: Solidity,
     pub library: HashMap<String, HashMap<String, String>>,
     pub networks: HashMap<String, Network>,

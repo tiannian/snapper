@@ -2,7 +2,6 @@ use clap::Parser;
 use commands::Arg;
 
 mod commands;
-mod config;
 mod utils;
 
 fn main() {

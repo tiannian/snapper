@@ -1,3 +1,5 @@
+//! Version from upstream
+
 use std::{collections::HashMap, path::Path};
 
 use futures_util::StreamExt;
@@ -33,6 +35,7 @@ pub struct Artifact {
     pub sha256: String,
 }
 
+/// Version on upstream.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompilerVersions {
     pub builds: HashMap<String, Artifact>,
@@ -42,14 +45,22 @@ pub const REGISTER_URL: &str =
     "https://raw.githubusercontent.com/tiannian/snapper/main/utils/solidity.json";
 
 impl CompilerVersions {
+    /// Load version infomations from upstream
+    ///
+    /// Default load info from github snapper repo
     pub async fn load() -> Result<Self> {
-        let response = reqwest::get(REGISTER_URL).await?;
+        Self::load_from(REGISTER_URL).await
+    }
+
+    pub async fn load_from(upstream: &str) -> Result<Self> {
+        let response = reqwest::get(upstream).await?;
 
         let res = response.json().await?;
 
         Ok(res)
     }
 
+    /// Download solc binary
     pub async fn download(&self, version: &str, platform: &Platform, target: &str) -> Result<()> {
         let artifact = self
             .builds
@@ -85,10 +96,10 @@ mod test {
         runtime.block_on(async move {
             let _artifact = CompilerVersions::load().await.unwrap();
 
-            // _artifact
-            //     .download("0.8.20", &Platform::LinuxAmd64, "../target")
-            //     .await
-            //     .unwrap()
+            _artifact
+                .download("0.8.20", &super::Platform::LinuxAmd64, "../target")
+                .await
+                .unwrap()
         });
     }
 }

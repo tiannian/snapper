@@ -1,3 +1,5 @@
+//! Type collections for solc json api input
+
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -221,7 +223,7 @@ pub struct Settings {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Input {
+pub struct CompilerInput {
     pub language: InputLanguage,
     pub sources: HashMap<String, SourceFile>,
     pub settings: Settings,
@@ -231,7 +233,7 @@ pub struct Input {
 mod test {
     use tokio::runtime::Runtime;
 
-    use crate::Input;
+    use crate::CompilerInput;
 
     #[test]
     fn test() {
@@ -239,7 +241,7 @@ mod test {
 
         let runtime = Runtime::new().unwrap();
         runtime.block_on(async move {
-            let _input: Input = serde_json::from_str(&config).unwrap();
+            let _input: CompilerInput = serde_json::from_str(&config).unwrap();
         });
     }
 }

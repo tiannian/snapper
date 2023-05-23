@@ -1,6 +1,7 @@
 pub mod input;
 #[doc(inline)]
-pub use input::Input;
+pub use input::CompilerInput;
 
 pub mod output;
-pub use output::*;
+#[doc(inline)]
+pub use output::CompilerOutput;
