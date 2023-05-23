@@ -2,6 +2,7 @@ use std::{env, path::Path, process::Command};
 
 use anyhow::Result;
 use clap::Args;
+use colored::Colorize;
 
 use crate::utils;
 
@@ -37,6 +38,8 @@ impl New {
             log::info!("Create some folder");
 
             utils::project::create(Path::new(&self.path))?;
+
+            println!("     {} snapper package", "Created".green().bold());
         }
 
         Ok(())

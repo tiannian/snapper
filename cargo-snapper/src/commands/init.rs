@@ -2,6 +2,7 @@ use std::{env, path::Path, process::Command};
 
 use anyhow::Result;
 use clap::Args;
+use colored::Colorize;
 
 use crate::utils;
 
@@ -27,7 +28,7 @@ impl Init {
             cmd.arg("--name").arg(name);
         }
 
-        cmd.arg(self.path);
+        cmd.arg(&self.path);
 
         let result = cmd.status()?;
         if !result.success() {
@@ -37,7 +38,9 @@ impl Init {
         } else {
             log::info!("Create some folder");
 
-            utils::project::create(Path::new(&"."))?;
+            utils::project::create(Path::new(&self.path))?;
+
+            println!("     {} snapper package", "Created".green().bold());
         }
 
         Ok(())

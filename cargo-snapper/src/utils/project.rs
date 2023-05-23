@@ -33,5 +33,10 @@ pub fn create(root: &Path) -> Result<()> {
         include_str!("../../assets/build.rs"),
     )?;
 
+    fs::write(
+        &root.join("Snapper.toml"),
+        include_str!("../../assets/Snapper.toml"),
+    )?;
+
     Ok(())
 }
