@@ -6,6 +6,9 @@ pub enum Error {
     #[error("Can't find target and platform")]
     NoTargetPlatform,
 
+    #[error("Unsupport platform")]
+    UnsupportPlatform,
+
     #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),
 
@@ -14,6 +17,9 @@ pub enum Error {
 
     #[error(transparent)]
     EnvError(#[from] std::env::VarError),
+
+    #[error(transparent)]
+    TomlDeError(#[from] toml::de::Error),
 }
 
 /// Result

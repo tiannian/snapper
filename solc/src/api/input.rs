@@ -3,23 +3,27 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use snapper_core::EvmVersion;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub enum InputLanguage {
+    #[default]
     Solidity,
     Yul,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SourceFile {
-    pub keccak256: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keccak256: Option<String>,
     #[serde(default)]
     pub urls: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub enum StopAfter {
     #[serde(rename = "parsing")]
+    #[default]
     Parsing,
 }
 
@@ -53,30 +57,6 @@ pub struct Optimizer {
     pub enabled: bool,
     pub runs: u32,
     pub details: OptimizerDetails,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum EvmVersion {
-    #[serde(rename = "homestead")]
-    Homestead,
-    #[serde(rename = "tangerineWhistle")]
-    TangerineWhistle,
-    #[serde(rename = "spuriousDragon")]
-    SpuriousDragon,
-    #[serde(rename = "byzantium")]
-    Byzantium,
-    #[serde(rename = "constantinople")]
-    Constantinople,
-    #[serde(rename = "petersburg")]
-    Petersburg,
-    #[serde(rename = "istanbul")]
-    Istanbul,
-    #[serde(rename = "berlin")]
-    Berlin,
-    #[serde(rename = "london")]
-    London,
-    #[serde(rename = "paris")]
-    Paris,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -219,7 +199,8 @@ pub struct Settings {
     #[serde(rename = "outputSelection")]
     pub output_selection: HashMap<String, HashMap<String, Vec<String>>>,
     #[serde(rename = "modelChecker")]
-    pub model_checker: ModelChecker,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_checker: Option<ModelChecker>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

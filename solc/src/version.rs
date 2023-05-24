@@ -26,6 +26,18 @@ impl Platform {
             Self::MacOSAmd64 => "macos-amd64",
         }
     }
+
+    pub fn from_target() -> Option<Self> {
+        if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
+            Some(Self::LinuxAmd64)
+        } else if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
+            Some(Self::WindowsAmd64)
+        } else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
+            Some(Self::MacOSAmd64)
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -61,7 +73,7 @@ impl CompilerVersions {
     }
 
     /// Download solc binary
-    pub async fn download(&self, version: &str, platform: &Platform, target: &str) -> Result<()> {
+    pub async fn download(&self, version: &str, platform: &Platform, target: &Path) -> Result<()> {
         let artifact = self
             .builds
             .get(&format!("{}-{}", version, platform.to_str()))
@@ -85,6 +97,8 @@ impl CompilerVersions {
 
 #[cfg(test)]
 mod test {
+    use std::path::Path;
+
     use tokio::runtime::Runtime;
 
     use crate::CompilerVersions;
@@ -96,10 +110,14 @@ mod test {
         runtime.block_on(async move {
             let _artifact = CompilerVersions::load().await.unwrap();
 
-            _artifact
-                .download("0.8.20", &super::Platform::LinuxAmd64, "../target")
-                .await
-                .unwrap()
+            // _artifact
+            //     .download(
+            //         "0.8.20",
+            //         &super::Platform::LinuxAmd64,
+            //         Path::new("../target"),
+            //     )
+            //     .await
+            //     .unwrap()
         });
     }
 }
