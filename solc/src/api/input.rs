@@ -32,7 +32,8 @@ pub struct YulDetails {
     #[serde(rename = "stackAllocation")]
     pub stack_allocation: bool,
     #[serde(rename = "optimizerSteps")]
-    pub optimizer_steps: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub optimizer_steps: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -184,6 +185,54 @@ pub struct ModelChecker {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub enum OutputSelection {
+    #[serde(rename = "abi")]
+    Abi,
+    #[serde(rename = "devdoc")]
+    DevDoc,
+    #[serde(rename = "userdoc")]
+    UserDoc,
+    #[serde(rename = "metadata")]
+    Metadata,
+    #[serde(rename = "ir")]
+    IR,
+    #[serde(rename = "irOptimized")]
+    IROptimzed,
+    #[serde(rename = "storageLayout")]
+    StorageLayout,
+    #[serde(rename = "evm.assembly")]
+    EvmAssembly,
+    #[serde(rename = "evm.legacyAssembly")]
+    EvmLeacyAssembly,
+    #[serde(rename = "evm.bytecode")]
+    EvmBytecode,
+    #[serde(rename = "evm.bytecode.functionDebugData")]
+    EvmBytecodeFunctionDebugData,
+    #[serde(rename = "evm.bytecode.object")]
+    EvmBytecodeObject,
+    #[serde(rename = "evm.bytecode.opcodes")]
+    EvmBytecodeOpcodes,
+    #[serde(rename = "evm.bytecode.sourceMap")]
+    EvmBytecodeSourceMap,
+    #[serde(rename = "evm.bytecode.linkReferences")]
+    EvmBytecodeLinkReferences,
+    #[serde(rename = "evm.bytecode.generatedSources")]
+    EvmBytecodeGeneratedSources,
+    #[serde(rename = "evm.deployedBytecode")]
+    EvmDeployedBytecode,
+    #[serde(rename = "evm.deployedBytecode.immutableReferences")]
+    EvmDeployedBytecodeImmutableReferences,
+    #[serde(rename = "evm.methodIdentifiers")]
+    EvmMethodIdentifiers,
+    #[serde(rename = "evm.gasEstimates")]
+    EvmGasEstimates,
+    #[serde(rename = "ewasm.wast")]
+    EWasmWast,
+    #[serde(rename = "ewasm.wasm")]
+    EWasmWasm,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(rename = "stopAfter")]
     pub stop_after: StopAfter,
@@ -223,6 +272,8 @@ mod test {
         let runtime = Runtime::new().unwrap();
         runtime.block_on(async move {
             let _input: CompilerInput = serde_json::from_str(&config).unwrap();
+
+            println!("{:#?}", _input);
         });
     }
 }

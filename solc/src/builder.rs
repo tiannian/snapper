@@ -94,7 +94,7 @@ impl Solc {
         //         metadata: (),
         //         libraries: (),
         //         output_selection: (),
-        //         model_checker: (),
+        //         model_checker: None,
         //     },
         // };
 
