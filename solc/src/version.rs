@@ -1,10 +1,13 @@
 //! Version from upstream
 
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
-use tokio::{fs::File, io::AsyncWriteExt};
+use tokio::{fs::OpenOptions, io::AsyncWriteExt};
 
 use crate::{Error, Result};
 
@@ -73,7 +76,12 @@ impl CompilerVersions {
     }
 
     /// Download solc binary
-    pub async fn download(&self, version: &str, platform: &Platform, target: &Path) -> Result<()> {
+    pub async fn download(
+        &self,
+        version: &str,
+        platform: &Platform,
+        target: &Path,
+    ) -> Result<PathBuf> {
         let artifact = self
             .builds
             .get(&format!("{}-{}", version, platform.to_str()))
@@ -83,7 +91,14 @@ impl CompilerVersions {
 
         let path = Path::new(target);
         let bin_path = path.join(format!("solc-v{}", version));
-        let mut file = File::create(&bin_path).await?;
+
+        let mut open = OpenOptions::new();
+        open.write(true).create(true);
+
+        #[cfg(unix)]
+        open.mode(0o776);
+
+        let mut file = open.open(&bin_path).await?;
 
         while let Some(item) = response.next().await {
             let bytes = item?;
@@ -91,7 +106,7 @@ impl CompilerVersions {
             file.write_all(&bytes).await?;
         }
 
-        Ok(())
+        Ok(bin_path)
     }
 }
 
@@ -110,14 +125,14 @@ mod test {
         runtime.block_on(async move {
             let _artifact = CompilerVersions::load().await.unwrap();
 
-            // _artifact
-            //     .download(
-            //         "0.8.20",
-            //         &super::Platform::LinuxAmd64,
-            //         Path::new("../target"),
-            //     )
-            //     .await
-            //     .unwrap()
+            _artifact
+                .download(
+                    "0.8.20",
+                    &super::Platform::LinuxAmd64,
+                    Path::new("../target"),
+                )
+                .await
+                .unwrap()
         });
     }
 }

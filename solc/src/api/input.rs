@@ -78,6 +78,8 @@ pub enum DebugInfo {
     Location,
     #[serde(rename = "snippet")]
     Snippet,
+    #[serde(rename = "*")]
+    All,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -186,6 +188,8 @@ pub struct ModelChecker {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum OutputSelection {
+    #[serde(rename = "ast")]
+    Ast,
     #[serde(rename = "abi")]
     Abi,
     #[serde(rename = "devdoc")]
@@ -243,10 +247,11 @@ pub struct Settings {
     #[serde(rename = "viaIR")]
     pub via_ir: bool,
     pub debug: SettingsDebug,
-    pub metadata: Metadata,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<Metadata>,
     pub libraries: HashMap<String, HashMap<String, String>>,
     #[serde(rename = "outputSelection")]
-    pub output_selection: HashMap<String, HashMap<String, Vec<String>>>,
+    pub output_selection: HashMap<String, HashMap<String, Vec<OutputSelection>>>,
     #[serde(rename = "modelChecker")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub model_checker: Option<ModelChecker>,
@@ -273,7 +278,7 @@ mod test {
         runtime.block_on(async move {
             let _input: CompilerInput = serde_json::from_str(&config).unwrap();
 
-            println!("{:#?}", _input);
+            // println!("{:#?}", _input);
         });
     }
 }

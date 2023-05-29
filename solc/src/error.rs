@@ -9,6 +9,15 @@ pub enum Error {
     #[error("Unsupport platform")]
     UnsupportPlatform,
 
+    #[error("Failed To Get Stdio")]
+    FailedToGetStdio,
+
+    #[error("Unknown Profile Type")]
+    UnknownProfileType,
+
+    #[error(transparent)]
+    SerdeJsonError(#[from] serde_json::Error),
+
     #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),
 

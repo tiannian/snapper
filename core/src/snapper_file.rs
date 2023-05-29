@@ -2,18 +2,29 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::ProfileType;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SnapperFile {
     pub solidity: Solidity,
+    #[serde(default)]
     pub library: HashMap<String, HashMap<String, String>>,
     pub networks: HashMap<String, Network>,
+}
+
+impl SnapperFile {
+    pub fn get_solidity_profile(&self, profile: ProfileType) -> &Profile {
+        match profile {
+            ProfileType::Debug => &self.solidity.profiles.debug,
+            ProfileType::Release => &self.solidity.profiles.release,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Profiles {
     pub debug: Profile,
     pub release: Profile,
-    pub test: Profile,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -35,6 +46,7 @@ impl Default for Profiles {
                 deduplicate: false,
                 constant: false,
                 remove_jumpdest: false,
+                cse: false,
             },
         };
 
@@ -49,16 +61,11 @@ impl Default for Profiles {
                 deduplicate: true,
                 constant: true,
                 remove_jumpdest: true,
+                cse: true,
             },
         };
 
-        let test = debug.clone();
-
-        Self {
-            debug,
-            release,
-            test,
-        }
+        Self { debug, release }
     }
 }
 
@@ -89,7 +96,7 @@ pub enum EvmVersion {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Solidity {
-    pub version: Vec<String>,
+    pub version: String,
     #[serde(default)]
     pub via_ir: bool,
     #[serde(default)]
@@ -108,6 +115,7 @@ pub struct Optimizer {
     pub deduplicate: bool,
     pub constant: bool,
     pub remove_jumpdest: bool,
+    pub cse: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

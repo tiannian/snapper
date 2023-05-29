@@ -308,8 +308,8 @@ mod test {
 
         let runtime = Runtime::new().unwrap();
         runtime.block_on(async move {
-            let obj: CompilerOutput = serde_json::from_str(&config).unwrap();
-            print!("{:#?}", obj);
+            let _obj: CompilerOutput = serde_json::from_str(&config).unwrap();
+            // print!("{:#?}", obj);
         });
     }
 }

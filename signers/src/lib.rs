@@ -1,14 +1,6 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+#![feature(async_fn_in_trait)]
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+mod wallet;
+pub use wallet::*;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub mod prelude;

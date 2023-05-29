@@ -2,7 +2,7 @@
 # Use `cargo snapper config` to show all config
 
 [solidity]
-version = ["0.8.17"]
+version = "0.8.17"
 
 [networks.localhost]
 url = "http://127.0.0.1:8545/"
