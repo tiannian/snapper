@@ -143,7 +143,7 @@ impl Solc {
             language: input::InputLanguage::Solidity,
             sources,
             settings: input::Settings {
-                stop_after: input::StopAfter::Parsing,
+                stop_after: None,
                 remappings: vec![],
                 optimizer,
                 evm_version: self.snapper.solidity.evm_version,
@@ -169,11 +169,12 @@ impl Solc {
             .stdout(Stdio::piped())
             .spawn()?;
 
-        let mut stdio = command
+        command
             .stdin
             .take()
             .ok_or(Error::FailedToGetStdio)?
-            .write_all(in_data.as_bytes());
+            .write_all(in_data.as_bytes())
+            .await?;
 
         let output = command.wait_with_output().await?;
 

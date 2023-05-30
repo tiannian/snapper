@@ -239,7 +239,8 @@ pub enum OutputSelection {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(rename = "stopAfter")]
-    pub stop_after: StopAfter,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stop_after: Option<StopAfter>,
     pub remappings: Vec<String>,
     pub optimizer: Optimizer,
     #[serde(rename = "evmVersion")]

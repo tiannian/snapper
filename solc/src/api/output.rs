@@ -69,7 +69,7 @@ pub struct OutputError {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Source {
     pub id: u32,
-    pub ast: HashMap<String, String>,
+    pub ast: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -258,6 +258,7 @@ pub struct GasEstimatesCreation {
 pub struct GasEstimates {
     pub creation: GasEstimatesCreation,
     pub external: HashMap<String, GasUsed>,
+    #[serde(default)]
     pub internal: HashMap<String, GasUsed>,
 }
 
@@ -269,7 +270,7 @@ pub struct EWasm {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Evm {
-    pub assembly: String,
+    pub assembly: Option<String>,
     pub bytecode: Bytecode,
     #[serde(rename = "deployedBytecode")]
     pub deployed_bytecode: DeployedBytecode,
@@ -282,16 +283,17 @@ pub struct Evm {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Contract {
     pub abi: Vec<ABIInfo>,
-    pub metadata: String,
-    pub ir: String,
+    pub metadata: Option<String>,
+    pub ir: Option<String>,
     #[serde(rename = "storageLayout")]
-    pub storage_layout: StorageLayout,
+    pub storage_layout: Option<StorageLayout>,
     pub evm: Evm,
-    pub ewasm: EWasm,
+    pub ewasm: Option<EWasm>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompilerOutput {
+    #[serde(default)]
     pub errors: Vec<OutputError>,
     #[serde(default)]
     pub sources: HashMap<String, Source>,
