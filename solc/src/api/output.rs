@@ -51,15 +51,16 @@ pub enum Severity {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OutputError {
     #[serde(rename = "sourceLocation")]
-    pub source_location: SourceLocation,
+    pub source_location: Option<SourceLocation>,
     #[serde(rename = "secondarySourceLocations")]
+    #[serde(default)]
     pub secondary_source_locations: Vec<SecondarySourceLocations>,
     #[serde(rename = "type")]
     pub ty: ErrorType,
     pub component: String,
     pub severity: Severity,
     #[serde(rename = "errorCode")]
-    pub error_code: String,
+    pub error_code: Option<String>,
     pub message: String,
     #[serde(rename = "formattedMessage")]
     pub formatted_message: String,
@@ -292,7 +293,9 @@ pub struct Contract {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompilerOutput {
     pub errors: Vec<OutputError>,
+    #[serde(default)]
     pub sources: HashMap<String, Source>,
+    #[serde(default)]
     pub contracts: HashMap<String, HashMap<String, Contract>>,
 }
 

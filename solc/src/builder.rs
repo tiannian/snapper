@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, path::PathBuf};
+use std::{collections::HashMap, env, path::PathBuf, process::Stdio};
 
 use snapper_core::{ProfileType, SnapperFile};
 use tokio::{fs, io::AsyncWriteExt, process::Command};
@@ -75,8 +75,8 @@ impl Solc {
         })
     }
 
-    pub async fn compile(self) -> Result<()> {
-        let mut all_files = fs::read_dir(".").await?;
+    pub async fn compile(self, dir: &str) -> Result<()> {
+        let mut all_files = fs::read_dir(dir).await?;
 
         let mut sources = HashMap::new();
 
@@ -161,13 +161,19 @@ impl Solc {
 
         let in_data = serde_json::to_string(&input)?;
 
+        println!("{}", in_data);
+
         let mut command = Command::new(self.solc_path)
             .arg("--standard-json")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
             .spawn()?;
 
-        let mut stdio = command.stdin.take().ok_or(Error::FailedToGetStdio)?;
-
-        stdio.write(in_data.as_bytes()).await?;
+        let mut stdio = command
+            .stdin
+            .take()
+            .ok_or(Error::FailedToGetStdio)?
+            .write_all(in_data.as_bytes());
 
         let output = command.wait_with_output().await?;
 
@@ -195,7 +201,8 @@ mod tests {
 
         let runtime = Runtime::new().unwrap();
         runtime.block_on(async move {
-            let _solc = Solc::new_with_config(config).await.unwrap();
+            let solc = Solc::new_with_config(config).await.unwrap();
+            solc.compile("./contracts").await.unwrap();
         });
     }
 }

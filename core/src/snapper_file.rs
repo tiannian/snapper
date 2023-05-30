@@ -78,6 +78,7 @@ pub enum EvmVersion {
     #[serde(rename = "spuriousDragon")]
     SpuriousDragon,
     #[serde(rename = "byzantium")]
+    #[default]
     Byzantium,
     #[serde(rename = "constantinople")]
     Constantinople,
@@ -90,7 +91,6 @@ pub enum EvmVersion {
     #[serde(rename = "london")]
     London,
     #[serde(rename = "paris")]
-    #[default]
     Paris,
 }
 
