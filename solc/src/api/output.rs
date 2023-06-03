@@ -295,10 +295,8 @@ pub struct Contract {
 pub struct CompilerOutput {
     #[serde(default)]
     pub errors: Vec<OutputError>,
-    #[serde(default)]
-    pub sources: HashMap<String, Source>,
-    #[serde(default)]
-    pub contracts: HashMap<String, HashMap<String, Contract>>,
+    pub sources: Option<HashMap<String, Source>>,
+    pub contracts: Option<HashMap<String, HashMap<String, Contract>>>,
 }
 
 #[cfg(test)]

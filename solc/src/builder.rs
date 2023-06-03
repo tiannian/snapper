@@ -188,6 +188,8 @@ impl Solc {
 
 #[cfg(test)]
 mod tests {
+    use std::env;
+
     use tokio::runtime::Runtime;
 
     use crate::{Config, Solc};
@@ -202,6 +204,8 @@ mod tests {
 
         let runtime = Runtime::new().unwrap();
         runtime.block_on(async move {
+            env::set_var("PROFILE", "debug");
+
             let solc = Solc::new_with_config(config).await.unwrap();
             solc.compile("./contracts").await.unwrap();
         });
