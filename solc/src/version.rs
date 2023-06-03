@@ -1,9 +1,6 @@
 //! Version from upstream
 
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, path::Path};
 
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
@@ -76,12 +73,7 @@ impl CompilerVersions {
     }
 
     /// Download solc binary
-    pub async fn download(
-        &self,
-        version: &str,
-        platform: &Platform,
-        target: &Path,
-    ) -> Result<PathBuf> {
+    pub async fn download(&self, version: &str, platform: &Platform, target: &Path) -> Result<()> {
         let artifact = self
             .builds
             .get(&format!("{}-{}", version, platform.to_str()))
@@ -89,16 +81,13 @@ impl CompilerVersions {
 
         let mut response = reqwest::get(&artifact.urls[0]).await?.bytes_stream();
 
-        let path = Path::new(target);
-        let bin_path = path.join(format!("solc-v{}", version));
-
         let mut open = OpenOptions::new();
         open.write(true).create(true);
 
         #[cfg(unix)]
         open.mode(0o776);
 
-        let mut file = open.open(&bin_path).await?;
+        let mut file = open.open(target).await?;
 
         while let Some(item) = response.next().await {
             let bytes = item?;
@@ -106,7 +95,7 @@ impl CompilerVersions {
             file.write_all(&bytes).await?;
         }
 
-        Ok(bin_path)
+        Ok(())
     }
 }
 
@@ -116,7 +105,7 @@ mod test {
 
     use tokio::runtime::Runtime;
 
-    use crate::CompilerVersions;
+    use crate::{utils, CompilerVersions};
 
     #[test]
     fn test_versions() {
@@ -125,12 +114,13 @@ mod test {
         runtime.block_on(async move {
             let _artifact = CompilerVersions::load().await.unwrap();
 
+            let version = "0.8.20";
+
+            let path = Path::new("../target");
+            let solc_path = utils::solc_path(path, version).unwrap();
+
             _artifact
-                .download(
-                    "0.8.20",
-                    &super::Platform::LinuxAmd64,
-                    Path::new("../target"),
-                )
+                .download("0.8.20", &super::Platform::LinuxAmd64, &solc_path)
                 .await
                 .unwrap()
         });

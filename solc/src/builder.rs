@@ -1,7 +1,16 @@
-use std::{collections::HashMap, env, path::PathBuf, process::Stdio};
+use std::{
+    collections::HashMap,
+    env,
+    path::{Path, PathBuf},
+    process::Stdio,
+};
 
 use snapper_core::{ProfileType, SnapperFile};
-use tokio::{fs, io::AsyncWriteExt, process::Command};
+use tokio::{
+    fs::{self, DirEntry},
+    io::AsyncWriteExt,
+    process::Command,
+};
 
 use crate::{
     input::{
@@ -24,74 +33,65 @@ impl Solc {
     ///
     /// Notice: this function only can be call in `build.rs`
     pub async fn new() -> Result<Self> {
-        let versions = CompilerVersions::load().await?;
         let default_dir = env::var("OUT_DIR")?;
-        let out_dir = PathBuf::from(default_dir);
-        let snapper = utils::load_snapper_file(".")?;
 
-        let platform = Platform::from_target().ok_or(Error::UnsupportPlatform)?;
-
-        let solc_path = versions
-            .download(&snapper.solidity.version, &platform, &out_dir)
-            .await?;
-
-        Ok(Self {
-            out_dir,
-            snapper,
-            solc_path,
-        })
+        Self::new_arguments(&default_dir, None, ".").await
     }
 
     pub async fn new_with_config(config: Config) -> Result<Self> {
-        let versions = if let Some(upstream) = config.upstream {
-            CompilerVersions::load_from(&upstream).await?
+        let out_dir = if let Some(out_dir) = config.out_dir {
+            out_dir
+        } else {
+            env::var("OUT_DIR")?
+        };
+
+        let snapper_file = if let Some(snapper) = &config.snapper_file {
+            snapper
+        } else {
+            "."
+        };
+
+        Self::new_arguments(&out_dir, config.upstream.as_deref(), snapper_file).await
+    }
+
+    async fn new_arguments(out_dir: &str, upstream: Option<&str>, snapper: &str) -> Result<Self> {
+        let versions = if let Some(upstream) = upstream {
+            CompilerVersions::load_from(upstream).await?
         } else {
             CompilerVersions::load().await?
         };
 
-        let out_dir = if let Some(out_dir) = config.out_dir {
-            PathBuf::from(out_dir)
-        } else {
-            let default_dir = env::var("OUT_DIR")?;
-            PathBuf::from(default_dir)
-        };
-
-        let snapper = if let Some(snapper) = config.snapper_file {
-            utils::load_snapper_file(&snapper)?
-        } else {
-            utils::load_snapper_file(".")?
-        };
+        let snapper = utils::load_snapper_file(snapper)?;
 
         let platform = Platform::from_target().ok_or(Error::UnsupportPlatform)?;
 
-        let solc_path = versions
-            .download(&snapper.solidity.version, &platform, &out_dir)
+        // TODO: Add exist check.
+
+        let out_dir = Path::new(out_dir);
+        let solc_path = utils::solc_path(out_dir, &snapper.solidity.version)?;
+
+        versions
+            .download(&snapper.solidity.version, &platform, &solc_path)
             .await?;
 
         Ok(Self {
-            out_dir,
+            out_dir: out_dir.to_path_buf(),
             snapper,
             solc_path,
         })
     }
 
-    pub async fn compile(self, dir: &str) -> Result<()> {
-        let mut all_files = fs::read_dir(dir).await?;
-
+    async fn compile_one(&self, file: &DirEntry) -> Result<()> {
         let mut sources = HashMap::new();
 
-        while let Some(file) = all_files.next_entry().await? {
-            if file.file_type().await?.is_file() {
-                let path = file.path();
-                let filename = file.file_name().to_string_lossy().to_string();
+        let path = file.path();
+        let filename = file.file_name().to_string_lossy().to_string();
 
-                let sf = SourceFile {
-                    keccak256: None,
-                    urls: vec![path.to_string_lossy().to_string()],
-                };
-                sources.insert(filename, sf);
-            }
-        }
+        let sf = SourceFile {
+            keccak256: None,
+            urls: vec![path.to_string_lossy().to_string()],
+        };
+        sources.insert(filename, sf);
 
         let mut output_selection = HashMap::new();
 
@@ -146,14 +146,14 @@ impl Solc {
                 stop_after: None,
                 remappings: vec![],
                 optimizer,
-                evm_version: self.snapper.solidity.evm_version,
+                evm_version: self.snapper.solidity.evm_version.clone(),
                 via_ir: self.snapper.solidity.via_ir,
                 debug: SettingsDebug {
                     revert_strings,
                     debug_info: vec![DebugInfo::All],
                 },
                 metadata: None,
-                libraries: self.snapper.library,
+                libraries: self.snapper.library.clone(),
                 output_selection,
                 model_checker: None,
             },
@@ -163,7 +163,7 @@ impl Solc {
 
         println!("{}", in_data);
 
-        let mut command = Command::new(self.solc_path)
+        let mut command = Command::new(self.solc_path.clone())
             .arg("--standard-json")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -181,6 +181,18 @@ impl Solc {
         let res: CompilerOutput = serde_json::from_slice(&output.stdout)?;
 
         println!("{:#?}", res);
+
+        Ok(())
+    }
+
+    pub async fn compile(self, dir: &str) -> Result<()> {
+        let mut all_files = fs::read_dir(dir).await?;
+
+        while let Some(file) = all_files.next_entry().await? {
+            if file.file_type().await?.is_file() {
+                self.compile_one(&file).await?;
+            }
+        }
 
         Ok(())
     }
