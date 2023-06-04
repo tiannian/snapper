@@ -1,6 +1,6 @@
 //! Type collections for solc json api input
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use serde::{Deserialize, Serialize};
 use snapper_core::EvmVersion;
@@ -250,7 +250,7 @@ pub struct Settings {
     pub debug: SettingsDebug,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<Metadata>,
-    pub libraries: HashMap<String, HashMap<String, String>>,
+    pub libraries: BTreeMap<String, BTreeMap<String, String>>,
     #[serde(rename = "outputSelection")]
     pub output_selection: HashMap<String, HashMap<String, Vec<OutputSelection>>>,
     #[serde(rename = "modelChecker")]

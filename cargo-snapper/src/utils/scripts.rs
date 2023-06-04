@@ -63,7 +63,7 @@ pub fn remove_manifest_bin(project_path: &Path, script: &str) -> Result<()> {
         let mut pos = 0;
 
         for (index, bin) in arr.iter_mut().enumerate() {
-            if let Some(_) = bin.get(script) {
+            if bin.get(script).is_some() {
                 pos = index;
             }
         }

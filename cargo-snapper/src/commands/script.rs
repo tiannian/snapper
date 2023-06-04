@@ -61,8 +61,8 @@ impl SubCmd {
             .ok_or(anyhow!("Failed goto parent"))?;
 
         match self {
-            Self::Create(n) => utils::scripts::create(&package_path, &n.name),
-            Self::Remove(n) => utils::scripts::remove(&package_path, &n.name),
+            Self::Create(n) => utils::scripts::create(package_path, &n.name),
+            Self::Remove(n) => utils::scripts::remove(package_path, &n.name),
         }
     }
 }

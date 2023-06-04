@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use alloc::{collections::BTreeMap, string::String, vec::Vec};
 
 use serde::{Deserialize, Serialize};
 
@@ -8,8 +8,8 @@ use crate::ProfileType;
 pub struct SnapperFile {
     pub solidity: Solidity,
     #[serde(default)]
-    pub library: HashMap<String, HashMap<String, String>>,
-    pub networks: HashMap<String, Network>,
+    pub library: BTreeMap<String, BTreeMap<String, String>>,
+    pub networks: BTreeMap<String, Network>,
 }
 
 impl SnapperFile {

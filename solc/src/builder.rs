@@ -3,6 +3,7 @@ use std::{
     env,
     path::{Path, PathBuf},
     process::Stdio,
+    str::FromStr,
 };
 
 use snapper_core::{ProfileType, SnapperFile};
@@ -111,7 +112,7 @@ impl Solc {
         output_selection.insert("*".to_string(), contract_output);
 
         let profile_s = env::var("PROFILE")?;
-        let pt = ProfileType::from_str(&profile_s).ok_or(Error::UnknownProfileType)?;
+        let pt = ProfileType::from_str(&profile_s)?;
         let profile = self.snapper.get_solidity_profile(pt);
 
         let revert_strings = if profile.debug {

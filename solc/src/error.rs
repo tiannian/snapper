@@ -29,6 +29,15 @@ pub enum Error {
 
     #[error(transparent)]
     TomlDeError(#[from] toml::de::Error),
+
+    #[error("Core error: {0}")]
+    CoreError(snapper_core::Error),
+}
+
+impl From<snapper_core::Error> for Error {
+    fn from(value: snapper_core::Error) -> Self {
+        Self::CoreError(value)
+    }
 }
 
 /// Result

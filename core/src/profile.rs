@@ -1,3 +1,7 @@
+use core::str::FromStr;
+
+use crate::{Error, Result};
+
 /// Profile
 #[derive(Debug, Clone)]
 pub enum ProfileType {
@@ -5,12 +9,14 @@ pub enum ProfileType {
     Release,
 }
 
-impl ProfileType {
-    pub fn from_str(ty: &str) -> Option<Self> {
+impl FromStr for ProfileType {
+    type Err = Error;
+
+    fn from_str(ty: &str) -> Result<Self> {
         match ty {
-            "release" => Some(Self::Release),
-            "debug" => Some(Self::Debug),
-            _ => None,
+            "release" => Ok(Self::Release),
+            "debug" => Ok(Self::Debug),
+            _ => Err(Error::UnknownProfileType),
         }
     }
 }

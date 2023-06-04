@@ -23,18 +23,18 @@ pub fn create(root: &Path) -> Result<()> {
     let tests = root.join("tests");
     fs::create_dir_all(&tests)?;
     fs::write(
-        &tests.join("locker.rs"),
+        tests.join("locker.rs"),
         include_str!("../../assets/locker.rs"),
     )?;
 
     // ---------
     fs::write(
-        &root.join("build.rs"),
+        root.join("build.rs"),
         include_str!("../../assets/build.rs"),
     )?;
 
     fs::write(
-        &root.join("Snapper.toml"),
+        root.join("Snapper.toml"),
         include_str!("../../assets/Snapper.toml"),
     )?;
 
