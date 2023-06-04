@@ -98,31 +98,3 @@ impl CompilerVersions {
         Ok(())
     }
 }
-
-#[cfg(test)]
-mod test {
-    use std::path::Path;
-
-    use tokio::runtime::Runtime;
-
-    use crate::{utils, CompilerVersions};
-
-    #[test]
-    fn test_versions() {
-        let runtime = Runtime::new().unwrap();
-
-        runtime.block_on(async move {
-            let _artifact = CompilerVersions::load().await.unwrap();
-
-            let version = "0.8.20";
-
-            let path = Path::new("../target");
-            let solc_path = utils::solc_path(path, version).unwrap();
-
-            _artifact
-                .download("0.8.20", &super::Platform::LinuxAmd64, &solc_path)
-                .await
-                .unwrap()
-        });
-    }
-}

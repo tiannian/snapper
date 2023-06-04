@@ -66,14 +66,14 @@ impl Solc {
 
         let platform = Platform::from_target().ok_or(Error::UnsupportPlatform)?;
 
-        // TODO: Add exist check.
-
         let out_dir = Path::new(out_dir);
         let solc_path = utils::solc_path(out_dir, &snapper.solidity.version)?;
 
-        versions
-            .download(&snapper.solidity.version, &platform, &solc_path)
-            .await?;
+        if !solc_path.exists() {
+            versions
+                .download(&snapper.solidity.version, &platform, &solc_path)
+                .await?;
+        }
 
         Ok(Self {
             out_dir: out_dir.to_path_buf(),
