@@ -18,7 +18,7 @@ use crate::{
         self, DebugInfo, Optimizer, OptimizerDetails, OutputSelection, RevertStrings,
         SettingsDebug, SourceFile, YulDetails,
     },
-    utils::{self, default_snapper_artifacts_dir},
+    utils,
     version::Platform,
     CompilerInput, CompilerOutput, CompilerVersions, Config, Error, Result,
 };
@@ -34,7 +34,7 @@ impl Solc {
     ///
     /// Notice: this function only can be call in `build.rs`
     pub async fn new() -> Result<Self> {
-        let out_dir = utils::default_snapper_bins_dir()?;
+        let out_dir = utils::default_snapper_outdir()?;
 
         Self::new_arguments(&out_dir, None, ".").await
     }
@@ -43,7 +43,7 @@ impl Solc {
         let out_dir = if let Some(out_dir) = config.out_dir {
             Path::new(&out_dir).to_path_buf()
         } else {
-            utils::default_snapper_bins_dir()?
+            utils::default_snapper_outdir()?
         };
 
         let snapper_file = if let Some(snapper) = &config.snapper_file {
@@ -56,8 +56,6 @@ impl Solc {
     }
 
     async fn new_arguments(out_dir: &Path, upstream: Option<&str>, snapper: &str) -> Result<Self> {
-        fs::create_dir_all(out_dir).await?;
-
         let versions = if let Some(upstream) = upstream {
             CompilerVersions::load_from(upstream).await?
         } else {
@@ -69,7 +67,11 @@ impl Solc {
         let platform = Platform::from_target().ok_or(Error::UnsupportPlatform)?;
 
         let out_dir = Path::new(out_dir);
-        let solc_path = utils::solc_path(out_dir, &snapper.solidity.version)?;
+
+        let bin_dir = out_dir.join("bin");
+        fs::create_dir_all(&bin_dir).await?;
+
+        let solc_path = utils::solc_path(&bin_dir, &snapper.solidity.version)?;
 
         if !solc_path.exists() {
             versions
@@ -105,7 +107,6 @@ impl Solc {
                 OutputSelection::Abi,
                 OutputSelection::EvmBytecode,
                 OutputSelection::EvmGasEstimates,
-                OutputSelection::EvmMethodIdentifiers,
                 OutputSelection::EvmBytecodeSourceMap,
                 OutputSelection::EvmDeployedBytecode,
             ],
@@ -190,13 +191,15 @@ impl Solc {
 
         if let Some(contracts) = res.contracts.ok_or(Error::NoContractOutput)?.get(&filename) {
             for (name, contract) in contracts.iter() {
-                let contract_dir = default_snapper_artifacts_dir()?.join(&filename).join(name);
+                let contract_dir = self.out_dir.join("artifacts").join(&filename).join(name);
                 fs::create_dir_all(&contract_dir).await?;
 
                 let abi = &contract.abi;
                 let bytecode = &contract.evm.bytecode.object;
-                let opcodes = &contract.evm.bytecode.opcodes;
-                let mi = &contract.evm.method_identifiers;
+                let opcodes = &contract.evm.bytecode.opcodes.trim();
+                let sourcemap = &contract.evm.bytecode.source_map.trim();
+
+                // TODO: Add estimate to info.
 
                 let mut file = File::create(contract_dir.join(format!("{}.abi", name))).await?;
                 file.write_all(serde_json::to_string(abi)?.as_bytes())
@@ -209,11 +212,9 @@ impl Solc {
                 let mut file = File::create(contract_dir.join(format!("{}.opcodes", name))).await?;
                 file.write_all(opcodes.as_bytes()).await?;
 
-                utils::write_method_identifiers(
-                    &contract_dir.join(format!("{}.identifiers", name)),
-                    mi,
-                )
-                .await?;
+                let mut file =
+                    File::create(contract_dir.join(format!("{}.sourcemap", name))).await?;
+                file.write_all(sourcemap.as_bytes()).await?;
             }
         }
 

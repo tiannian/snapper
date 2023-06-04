@@ -275,6 +275,7 @@ pub struct Evm {
     #[serde(rename = "deployedBytecode")]
     pub deployed_bytecode: DeployedBytecode,
     #[serde(rename = "methodIdentifiers")]
+    #[serde(default)]
     pub method_identifiers: HashMap<String, Selector>,
     #[serde(rename = "gasEstimates")]
     pub gas_estimates: GasEstimates,
