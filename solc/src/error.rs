@@ -15,6 +15,9 @@ pub enum Error {
     #[error("Unknown Profile Type")]
     UnknownProfileType,
 
+    #[error("No contract output")]
+    NoContractOutput,
+
     #[error(transparent)]
     SerdeJsonError(#[from] serde_json::Error),
 

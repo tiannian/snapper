@@ -8,7 +8,7 @@ use std::{
 
 use snapper_core::{ProfileType, SnapperFile};
 use tokio::{
-    fs::{self, DirEntry},
+    fs::{self, DirEntry, File},
     io::AsyncWriteExt,
     process::Command,
 };
@@ -18,7 +18,7 @@ use crate::{
         self, DebugInfo, Optimizer, OptimizerDetails, OutputSelection, RevertStrings,
         SettingsDebug, SourceFile, YulDetails,
     },
-    utils,
+    utils::{self, default_snapper_artifacts_dir},
     version::Platform,
     CompilerInput, CompilerOutput, CompilerVersions, Config, Error, Result,
 };
@@ -34,16 +34,16 @@ impl Solc {
     ///
     /// Notice: this function only can be call in `build.rs`
     pub async fn new() -> Result<Self> {
-        let default_dir = env::var("OUT_DIR")?;
+        let out_dir = utils::default_snapper_bins_dir()?;
 
-        Self::new_arguments(&default_dir, None, ".").await
+        Self::new_arguments(&out_dir, None, ".").await
     }
 
     pub async fn new_with_config(config: Config) -> Result<Self> {
         let out_dir = if let Some(out_dir) = config.out_dir {
-            out_dir
+            Path::new(&out_dir).to_path_buf()
         } else {
-            env::var("OUT_DIR")?
+            utils::default_snapper_bins_dir()?
         };
 
         let snapper_file = if let Some(snapper) = &config.snapper_file {
@@ -55,7 +55,9 @@ impl Solc {
         Self::new_arguments(&out_dir, config.upstream.as_deref(), snapper_file).await
     }
 
-    async fn new_arguments(out_dir: &str, upstream: Option<&str>, snapper: &str) -> Result<Self> {
+    async fn new_arguments(out_dir: &Path, upstream: Option<&str>, snapper: &str) -> Result<Self> {
+        fs::create_dir_all(out_dir).await?;
+
         let versions = if let Some(upstream) = upstream {
             CompilerVersions::load_from(upstream).await?
         } else {
@@ -92,7 +94,7 @@ impl Solc {
             keccak256: None,
             urls: vec![path.to_string_lossy().to_string()],
         };
-        sources.insert(filename, sf);
+        sources.insert(filename.clone(), sf);
 
         let mut output_selection = HashMap::new();
 
@@ -162,8 +164,6 @@ impl Solc {
 
         let in_data = serde_json::to_string(&input)?;
 
-        println!("{}", in_data);
-
         let mut command = Command::new(self.solc_path.clone())
             .arg("--standard-json")
             .stdin(Stdio::piped())
@@ -182,6 +182,40 @@ impl Solc {
         let res: CompilerOutput = serde_json::from_slice(&output.stdout)?;
 
         println!("{:#?}", res);
+
+        if !res.errors.is_empty() {
+            println!("{:?}", res.errors);
+            panic!("Solidity compile error");
+        }
+
+        if let Some(contracts) = res.contracts.ok_or(Error::NoContractOutput)?.get(&filename) {
+            for (name, contract) in contracts.iter() {
+                let contract_dir = default_snapper_artifacts_dir()?.join(&filename).join(name);
+                fs::create_dir_all(&contract_dir).await?;
+
+                let abi = &contract.abi;
+                let bytecode = &contract.evm.bytecode.object;
+                let opcodes = &contract.evm.bytecode.opcodes;
+                let mi = &contract.evm.method_identifiers;
+
+                let mut file = File::create(contract_dir.join(format!("{}.abi", name))).await?;
+                file.write_all(serde_json::to_string(abi)?.as_bytes())
+                    .await?;
+
+                let mut file =
+                    File::create(contract_dir.join(format!("{}.bytecode", name))).await?;
+                file.write_all(bytecode).await?;
+
+                let mut file = File::create(contract_dir.join(format!("{}.opcodes", name))).await?;
+                file.write_all(opcodes.as_bytes()).await?;
+
+                utils::write_method_identifiers(
+                    &contract_dir.join(format!("{}.identifiers", name)),
+                    mi,
+                )
+                .await?;
+            }
+        }
 
         Ok(())
     }
@@ -211,13 +245,14 @@ mod tests {
     fn test() {
         let config = Config {
             upstream: None,
-            out_dir: Some("../target".to_string()),
+            out_dir: None,
             snapper_file: Some("../cargo-snapper/assets/Snapper.toml".to_string()),
         };
 
         let runtime = Runtime::new().unwrap();
         runtime.block_on(async move {
             env::set_var("PROFILE", "debug");
+            env::set_var("CARGO_TARGET_DIR", "../target");
 
             let solc = Solc::new_with_config(config).await.unwrap();
             solc.compile("./contracts").await.unwrap();

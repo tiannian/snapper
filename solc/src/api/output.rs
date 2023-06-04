@@ -234,7 +234,7 @@ pub struct DeployedBytecode {
 pub struct Selector {
     #[serde(serialize_with = "hex::serialize")]
     #[serde(deserialize_with = "hex::deserialize")]
-    value: [u8; 4],
+    pub value: [u8; 4],
 }
 
 #[derive(Debug, Serialize, Deserialize)]
