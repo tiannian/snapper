@@ -33,6 +33,9 @@ pub enum Error {
     #[error(transparent)]
     TomlDeError(#[from] toml::de::Error),
 
+    #[error(transparent)]
+    StripPrefixError(#[from] std::path::StripPrefixError),
+
     #[error("Core error: {0}")]
     CoreError(snapper_core::Error),
 }

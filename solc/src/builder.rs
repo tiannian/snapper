@@ -222,9 +222,23 @@ impl Solc {
     pub async fn compile_path(self, dir: &str) -> Result<()> {
         let mut all_files = fs::read_dir(dir).await?;
 
+        let package_name = env::var("CARGO_PKG_NAME")?;
+
+        let from_dir = Path::new(dir);
+        let to_dir = self.out_dir.join("contracts").join(package_name);
+
+        fs::create_dir_all(&to_dir).await?;
+
         while let Some(file) = all_files.next_entry().await? {
+            let file_path = file.path();
+
             if file.file_type().await?.is_file() {
                 self.compile_one(&file).await?;
+
+                let end = file_path.strip_prefix(from_dir)?;
+                fs::copy(&file_path, to_dir.join(end)).await?;
+            } else {
+                fs::create_dir_all(&file_path).await?;
             }
         }
 
@@ -256,9 +270,10 @@ mod tests {
         runtime.block_on(async move {
             env::set_var("PROFILE", "debug");
             env::set_var("CARGO_TARGET_DIR", "../target");
+            env::set_var("CARGO_PKG_NAME", "snapper-solc");
 
             let solc = Solc::new_with_config(config).await.unwrap();
-            solc.compile_path("./contracts").await.unwrap();
+            solc.compile().await.unwrap();
         });
     }
 }
