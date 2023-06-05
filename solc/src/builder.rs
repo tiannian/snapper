@@ -182,8 +182,6 @@ impl Solc {
 
         let res: CompilerOutput = serde_json::from_slice(&output.stdout)?;
 
-        println!("{:#?}", res);
-
         if !res.errors.is_empty() {
             println!("{:?}", res.errors);
             panic!("Solidity compile error");
@@ -221,7 +219,7 @@ impl Solc {
         Ok(())
     }
 
-    pub async fn compile(self, dir: &str) -> Result<()> {
+    pub async fn compile_path(self, dir: &str) -> Result<()> {
         let mut all_files = fs::read_dir(dir).await?;
 
         while let Some(file) = all_files.next_entry().await? {
@@ -231,6 +229,10 @@ impl Solc {
         }
 
         Ok(())
+    }
+
+    pub async fn compile(self) -> Result<()> {
+        self.compile_path("./contracts").await
     }
 }
 
@@ -256,7 +258,7 @@ mod tests {
             env::set_var("CARGO_TARGET_DIR", "../target");
 
             let solc = Solc::new_with_config(config).await.unwrap();
-            solc.compile("./contracts").await.unwrap();
+            solc.compile_path("./contracts").await.unwrap();
         });
     }
 }
