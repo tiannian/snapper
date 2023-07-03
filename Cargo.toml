@@ -1,10 +1,2 @@
 [workspace]
-members = [
-    "cargo-snapper",
-    "core",
-    "ethers",
-    "node",
-    "provider",
-    "signers",
-    "solc",
-]
+members = ["cargo-snapper", "core", "node", "snapper", "solc"]
