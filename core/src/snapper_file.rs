@@ -13,7 +13,7 @@ pub struct SnapperFile {
 }
 
 impl SnapperFile {
-    pub fn get_solidity_profile(&self, profile: ProfileType) -> &Profile {
+    pub fn get_solidity_profile(&self, profile: &ProfileType) -> &Profile {
         match profile {
             ProfileType::Debug => &self.solidity.profiles.debug,
             ProfileType::Release => &self.solidity.profiles.release,

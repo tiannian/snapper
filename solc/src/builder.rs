@@ -1,14 +1,12 @@
 use std::{
     collections::HashMap,
-    env,
     path::{Path, PathBuf},
     process::Stdio,
-    str::FromStr,
 };
 
 use snapper_core::{ProfileType, SnapperFile};
 use tokio::{
-    fs::{self, DirEntry, File},
+    fs::{self, File},
     io::AsyncWriteExt,
     process::Command,
 };
@@ -20,11 +18,10 @@ use crate::{
     },
     utils,
     version::Platform,
-    CompilerInput, CompilerOutput, CompilerVersions, Config, Error, Result,
+    CompilerInput, CompilerOutput, CompilerVersions, Error, Result,
 };
 
 pub struct Solc {
-    out_dir: PathBuf,
     snapper: SnapperFile,
     solc_path: PathBuf,
 }
@@ -33,29 +30,11 @@ impl Solc {
     /// New a solc instance
     ///
     /// Notice: this function only can be call in `build.rs`
-    pub async fn new() -> Result<Self> {
-        let out_dir = utils::default_snapper_outdir()?;
-
-        Self::new_arguments(&out_dir, None, ".").await
-    }
-
-    pub async fn new_with_config(config: Config) -> Result<Self> {
-        let out_dir = if let Some(out_dir) = config.out_dir {
-            Path::new(&out_dir).to_path_buf()
-        } else {
-            utils::default_snapper_outdir()?
-        };
-
-        let snapper_file = if let Some(snapper) = &config.snapper_file {
-            snapper
-        } else {
-            "."
-        };
-
-        Self::new_arguments(&out_dir, config.upstream.as_deref(), snapper_file).await
-    }
-
-    async fn new_arguments(out_dir: &Path, upstream: Option<&str>, snapper: &str) -> Result<Self> {
+    pub async fn new<P: AsRef<Path>>(
+        out_dir: P,
+        upstream: Option<&str>,
+        snapper: &str,
+    ) -> Result<Self> {
         let versions = if let Some(upstream) = upstream {
             CompilerVersions::load_from(upstream).await?
         } else {
@@ -66,7 +45,7 @@ impl Solc {
 
         let platform = Platform::from_target().ok_or(Error::UnsupportPlatform)?;
 
-        let out_dir = Path::new(out_dir);
+        let out_dir = out_dir.as_ref();
 
         let bin_dir = out_dir.join("bin");
         fs::create_dir_all(&bin_dir).await?;
@@ -79,22 +58,28 @@ impl Solc {
                 .await?;
         }
 
-        Ok(Self {
-            out_dir: out_dir.to_path_buf(),
-            snapper,
-            solc_path,
-        })
+        Ok(Self { snapper, solc_path })
     }
 
-    async fn compile_one(&self, file: &DirEntry) -> Result<()> {
+    pub async fn compile<P: AsRef<Path>>(
+        &self,
+        file: P,
+        profile_type: &ProfileType,
+        out_dir: P,
+    ) -> Result<()> {
         let mut sources = HashMap::new();
 
-        let path = file.path();
-        let filename = file.file_name().to_string_lossy().to_string();
+        let file = file.as_ref();
+
+        let filename = file
+            .file_name()
+            .ok_or(Error::FailedToParseFileName)?
+            .to_string_lossy()
+            .to_string();
 
         let sf = SourceFile {
             keccak256: None,
-            urls: vec![path.to_string_lossy().to_string()],
+            urls: vec![file.to_string_lossy().to_string()],
         };
         sources.insert(filename.clone(), sf);
 
@@ -114,9 +99,7 @@ impl Solc {
 
         output_selection.insert("*".to_string(), contract_output);
 
-        let profile_s = env::var("PROFILE")?;
-        let pt = ProfileType::from_str(&profile_s)?;
-        let profile = self.snapper.get_solidity_profile(pt);
+        let profile = self.snapper.get_solidity_profile(profile_type);
 
         let revert_strings = if profile.debug {
             RevertStrings::Debug
@@ -189,7 +172,9 @@ impl Solc {
 
         if let Some(contracts) = res.contracts.ok_or(Error::NoContractOutput)?.get(&filename) {
             for (name, contract) in contracts.iter() {
-                let contract_dir = self.out_dir.join("artifacts").join(&filename).join(name);
+                let out_dir = out_dir.as_ref();
+
+                let contract_dir = out_dir.join(&filename).join(name);
                 fs::create_dir_all(&contract_dir).await?;
 
                 let abi = &contract.abi;
@@ -218,62 +203,30 @@ impl Solc {
 
         Ok(())
     }
-
-    pub async fn compile_path(self, dir: &str) -> Result<()> {
-        let mut all_files = fs::read_dir(dir).await?;
-
-        let package_name = env::var("CARGO_PKG_NAME")?;
-
-        let from_dir = Path::new(dir);
-        let to_dir = self.out_dir.join("contracts").join(package_name);
-
-        fs::create_dir_all(&to_dir).await?;
-
-        while let Some(file) = all_files.next_entry().await? {
-            let file_path = file.path();
-
-            if file.file_type().await?.is_file() {
-                self.compile_one(&file).await?;
-
-                let end = file_path.strip_prefix(from_dir)?;
-                fs::copy(&file_path, to_dir.join(end)).await?;
-            } else {
-                fs::create_dir_all(&file_path).await?;
-            }
-        }
-
-        Ok(())
-    }
-
-    pub async fn compile(self) -> Result<()> {
-        self.compile_path("./contracts").await
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-
+    use snapper_core::ProfileType;
     use tokio::runtime::Runtime;
 
-    use crate::{Config, Solc};
+    use crate::Solc;
 
     #[test]
     fn test() {
-        let config = Config {
-            upstream: None,
-            out_dir: None,
-            snapper_file: Some("../cargo-snapper/assets/Snapper.toml".to_string()),
-        };
+        let out_dir = "../target";
+        let snapper_file = "../cargo-snapper/assets/Snapper.toml";
 
         let runtime = Runtime::new().unwrap();
         runtime.block_on(async move {
-            env::set_var("PROFILE", "debug");
-            env::set_var("CARGO_TARGET_DIR", "../target");
-            env::set_var("CARGO_PKG_NAME", "snapper-solc");
-
-            let solc = Solc::new_with_config(config).await.unwrap();
-            solc.compile().await.unwrap();
+            let solc = Solc::new(out_dir, None, snapper_file).await.unwrap();
+            solc.compile(
+                "contracts/Lock.sol",
+                &ProfileType::Debug,
+                "../target/solc-test/",
+            )
+            .await
+            .unwrap();
         });
     }
 }

@@ -12,6 +12,9 @@ pub enum Error {
     #[error("Failed To Get Stdio")]
     FailedToGetStdio,
 
+    #[error("Failed To Parse Filename")]
+    FailedToParseFileName,
+
     #[error("Unknown Profile Type")]
     UnknownProfileType,
 

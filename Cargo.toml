@@ -1,2 +1,2 @@
 [workspace]
-members = ["cargo-snapper", "core", "node", "build", "solc"]
+members = ["cargo-snapper", "core", "node", "build", "solc", "snapper"]
