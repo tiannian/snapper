@@ -55,7 +55,7 @@ impl Solc {
         file: P,
         profile_type: &ProfileType,
         out_dir: P,
-    ) -> Result<()> {
+    ) -> Result<Vec<String>> {
         let mut sources = HashMap::new();
 
         let file = file.as_ref();
@@ -158,39 +158,49 @@ impl Solc {
             panic!("Solidity compile error");
         }
 
-        if let Some(contracts) = res
+        let res = if let Some(contracts) = res
             .contracts
             .ok_or(anyhow!("No target contract output"))?
             .get(&filename)
         {
+            let mut res = Vec::with_capacity(contracts.len());
+
             for (name, contract) in contracts.iter() {
+                res.push(name.clone());
+
                 let out_dir = out_dir.as_ref();
 
-                let contract_dir = out_dir.join(&filename).join(name);
+                let contract_dir = out_dir.join(&filename);
                 fs::create_dir_all(&contract_dir)?;
 
                 let abi = &contract.abi;
                 let bytecode = &contract.evm.bytecode.object;
                 let opcodes = &contract.evm.bytecode.opcodes.trim();
                 let sourcemap = &contract.evm.bytecode.source_map.trim();
+                let gas = &contract.evm.gas_estimates;
 
-                // TODO: Add estimate to info.
-
-                let mut file = File::create(contract_dir.join(format!("{}.abi", name)))?;
+                let mut file = File::create(contract_dir.join(format!("{name}.abi")))?;
                 file.write_all(serde_json::to_string(abi)?.as_bytes())?;
 
-                let mut file = File::create(contract_dir.join(format!("{}.bytecode", name)))?;
+                let mut file = File::create(contract_dir.join(format!("{name}.bytecode")))?;
                 file.write_all(bytecode)?;
 
-                let mut file = File::create(contract_dir.join(format!("{}.opcodes", name)))?;
+                let mut file = File::create(contract_dir.join(format!("{name}.opcodes")))?;
                 file.write_all(opcodes.as_bytes())?;
 
-                let mut file = File::create(contract_dir.join(format!("{}.sourcemap", name)))?;
+                let mut file = File::create(contract_dir.join(format!("{name}.gas")))?;
+                file.write_all(serde_json::to_string(gas)?.as_bytes())?;
+
+                let mut file = File::create(contract_dir.join(format!("{name}.sourcemap")))?;
                 file.write_all(sourcemap.as_bytes())?;
             }
-        }
 
-        Ok(())
+            res
+        } else {
+            vec![]
+        };
+
+        Ok(res)
     }
 }
 

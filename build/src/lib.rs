@@ -5,6 +5,7 @@ use std::{
 };
 
 use anyhow::{anyhow, Result};
+use ethers_contract_abigen::Abigen;
 use snapper_core::ProfileType;
 use snapper_solc::Solc;
 
@@ -75,7 +76,25 @@ impl Builder {
             .join(package_name)
             .join(filename);
 
-        solc.compile(file, &profile_type, &out_dir)?;
+        let contracts = solc.compile(file, &profile_type, &out_dir)?;
+
+        // Abi generate.
+        for c in contracts {
+            let abi_path = out_dir.join(format!("{c}.abi"));
+
+            let target_file = env::var("OUT_DIR")?;
+            let target_file = Path::new(&target_file).join(filename);
+            fs::create_dir_all(&target_file)?;
+
+            let target_file = target_file.join(format!("{c}.rs"));
+
+            Abigen::new(c, abi_path.to_str().ok_or(anyhow!("Failed to get path"))?)
+                .map_err(|e| anyhow!("{e}"))?
+                .generate()
+                .map_err(|e| anyhow!("{e}"))?
+                .write_to_file(target_file)?;
+        }
+
         Ok(())
     }
 
@@ -109,9 +128,6 @@ impl Builder {
         };
 
         self.walk_dir(&contract_dir, &solc)?;
-
-        // Generate lib from abi
-        /* let gen = MultiAbigen::from_json_files("")?; */
         Ok(())
     }
 }
