@@ -1,12 +1,9 @@
 //! Version from upstream
 
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, fs::OpenOptions, path::Path};
 
-use futures_util::StreamExt;
+use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
-use tokio::{fs::OpenOptions, io::AsyncWriteExt};
-
-use crate::{Error, Result};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Platform {
@@ -60,26 +57,29 @@ impl CompilerVersions {
     /// Load version infomations from upstream
     ///
     /// Default load info from github snapper repo
-    pub async fn load() -> Result<Self> {
-        Self::load_from(REGISTER_URL).await
+    pub fn load() -> Result<Self> {
+        Self::load_from(REGISTER_URL)
     }
 
-    pub async fn load_from(upstream: &str) -> Result<Self> {
-        let response = reqwest::get(upstream).await?;
+    pub fn load_from(upstream: &str) -> Result<Self> {
+        let response = attohttpc::get(upstream).send()?;
 
-        let res = response.json().await?;
+        let res = response.json()?;
 
         Ok(res)
     }
 
     /// Download solc binary
-    pub async fn download(&self, version: &str, platform: &Platform, target: &Path) -> Result<()> {
+    pub fn download(&self, version: &str, platform: &Platform, target: &Path) -> Result<()> {
+        #[cfg(unix)]
+        use std::os::unix::fs::OpenOptionsExt;
+
         let artifact = self
             .builds
             .get(&format!("{}-{}", version, platform.to_str()))
-            .ok_or(Error::NoTargetPlatform)?;
+            .ok_or(anyhow!("No Target support"))?;
 
-        let mut response = reqwest::get(&artifact.urls[0]).await?.bytes_stream();
+        let response = attohttpc::get(&artifact.urls[0]).send()?;
 
         let mut open = OpenOptions::new();
         open.write(true).create(true);
@@ -87,13 +87,9 @@ impl CompilerVersions {
         #[cfg(unix)]
         open.mode(0o776);
 
-        let mut file = open.open(target).await?;
+        let file = open.open(target)?;
 
-        while let Some(item) = response.next().await {
-            let bytes = item?;
-
-            file.write_all(&bytes).await?;
-        }
+        response.write_to(file)?;
 
         Ok(())
     }

@@ -4,7 +4,7 @@
 
 - [x] Split logic into build, solc crate ony call solc.
 - [x] Use scratch to generate all state.
-- [ ] Remove tokio for build script.
+- [x] Remove tokio for build script.
 - [ ] Add auto generated include code in src.
 - [ ] Add auto register network into snapper.
 - [ ] Add `ContractFactory::new(name)`, `getSigner()` and others into snapper.

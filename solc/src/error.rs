@@ -25,12 +25,6 @@ pub enum Error {
     SerdeJsonError(#[from] serde_json::Error),
 
     #[error(transparent)]
-    ReqwestError(#[from] reqwest::Error),
-
-    #[error(transparent)]
-    TokioIoError(#[from] tokio::io::Error),
-
-    #[error(transparent)]
     EnvError(#[from] std::env::VarError),
 
     #[error(transparent)]

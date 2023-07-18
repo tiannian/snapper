@@ -1,15 +1,13 @@
 use std::{
     collections::HashMap,
+    fs::{self, File},
+    io::Write,
     path::{Path, PathBuf},
-    process::Stdio,
+    process::{Command, Stdio},
 };
 
+use anyhow::{anyhow, Result};
 use snapper_core::{ProfileType, SnapperFile};
-use tokio::{
-    fs::{self, File},
-    io::AsyncWriteExt,
-    process::Command,
-};
 
 use crate::{
     input::{
@@ -18,7 +16,7 @@ use crate::{
     },
     utils,
     version::Platform,
-    CompilerInput, CompilerOutput, CompilerVersions, Error, Result,
+    CompilerInput, CompilerOutput, CompilerVersions,
 };
 
 pub struct Solc {
@@ -30,38 +28,32 @@ impl Solc {
     /// New a solc instance
     ///
     /// Notice: this function only can be call in `build.rs`
-    pub async fn new<P: AsRef<Path>>(
-        out_dir: P,
-        upstream: Option<&str>,
-        snapper: &str,
-    ) -> Result<Self> {
+    pub fn new<P: AsRef<Path>>(out_dir: P, upstream: Option<&str>, snapper: &str) -> Result<Self> {
         let versions = if let Some(upstream) = upstream {
-            CompilerVersions::load_from(upstream).await?
+            CompilerVersions::load_from(upstream)?
         } else {
-            CompilerVersions::load().await?
+            CompilerVersions::load()?
         };
 
         let snapper = utils::load_snapper_file(snapper)?;
 
-        let platform = Platform::from_target().ok_or(Error::UnsupportPlatform)?;
+        let platform = Platform::from_target().ok_or(anyhow!("No support platform"))?;
 
         let out_dir = out_dir.as_ref();
 
         let bin_dir = out_dir.join("bin");
-        fs::create_dir_all(&bin_dir).await?;
+        fs::create_dir_all(&bin_dir)?;
 
         let solc_path = utils::solc_path(&bin_dir, &snapper.solidity.version)?;
 
         if !solc_path.exists() {
-            versions
-                .download(&snapper.solidity.version, &platform, &solc_path)
-                .await?;
+            versions.download(&snapper.solidity.version, &platform, &solc_path)?;
         }
 
         Ok(Self { snapper, solc_path })
     }
 
-    pub async fn compile<P: AsRef<Path>>(
+    pub fn compile<P: AsRef<Path>>(
         &self,
         file: P,
         profile_type: &ProfileType,
@@ -73,7 +65,7 @@ impl Solc {
 
         let filename = file
             .file_name()
-            .ok_or(Error::FailedToParseFileName)?
+            .ok_or(anyhow!("Failed to parse filename"))?
             .to_string_lossy()
             .to_string();
 
@@ -157,11 +149,10 @@ impl Solc {
         command
             .stdin
             .take()
-            .ok_or(Error::FailedToGetStdio)?
-            .write_all(in_data.as_bytes())
-            .await?;
+            .ok_or(anyhow!("Failed to get stdin"))?
+            .write_all(in_data.as_bytes())?;
 
-        let output = command.wait_with_output().await?;
+        let output = command.wait_with_output()?;
 
         let res: CompilerOutput = serde_json::from_slice(&output.stdout)?;
 
@@ -170,12 +161,16 @@ impl Solc {
             panic!("Solidity compile error");
         }
 
-        if let Some(contracts) = res.contracts.ok_or(Error::NoContractOutput)?.get(&filename) {
+        if let Some(contracts) = res
+            .contracts
+            .ok_or(anyhow!("No target contract output"))?
+            .get(&filename)
+        {
             for (name, contract) in contracts.iter() {
                 let out_dir = out_dir.as_ref();
 
                 let contract_dir = out_dir.join(&filename).join(name);
-                fs::create_dir_all(&contract_dir).await?;
+                fs::create_dir_all(&contract_dir)?;
 
                 let abi = &contract.abi;
                 let bytecode = &contract.evm.bytecode.object;
@@ -184,20 +179,17 @@ impl Solc {
 
                 // TODO: Add estimate to info.
 
-                let mut file = File::create(contract_dir.join(format!("{}.abi", name))).await?;
-                file.write_all(serde_json::to_string(abi)?.as_bytes())
-                    .await?;
+                let mut file = File::create(contract_dir.join(format!("{}.abi", name)))?;
+                file.write_all(serde_json::to_string(abi)?.as_bytes())?;
 
-                let mut file =
-                    File::create(contract_dir.join(format!("{}.bytecode", name))).await?;
-                file.write_all(bytecode).await?;
+                let mut file = File::create(contract_dir.join(format!("{}.bytecode", name)))?;
+                file.write_all(bytecode)?;
 
-                let mut file = File::create(contract_dir.join(format!("{}.opcodes", name))).await?;
-                file.write_all(opcodes.as_bytes()).await?;
+                let mut file = File::create(contract_dir.join(format!("{}.opcodes", name)))?;
+                file.write_all(opcodes.as_bytes())?;
 
-                let mut file =
-                    File::create(contract_dir.join(format!("{}.sourcemap", name))).await?;
-                file.write_all(sourcemap.as_bytes()).await?;
+                let mut file = File::create(contract_dir.join(format!("{}.sourcemap", name)))?;
+                file.write_all(sourcemap.as_bytes())?;
             }
         }
 
@@ -208,7 +200,6 @@ impl Solc {
 #[cfg(test)]
 mod tests {
     use snapper_core::ProfileType;
-    use tokio::runtime::Runtime;
 
     use crate::Solc;
 
@@ -217,16 +208,12 @@ mod tests {
         let out_dir = "../target";
         let snapper_file = "../cargo-snapper/assets/Snapper.toml";
 
-        let runtime = Runtime::new().unwrap();
-        runtime.block_on(async move {
-            let solc = Solc::new(out_dir, None, snapper_file).await.unwrap();
-            solc.compile(
-                "contracts/Lock.sol",
-                &ProfileType::Debug,
-                "../target/solc-test/",
-            )
-            .await
-            .unwrap();
-        });
+        let solc = Solc::new(out_dir, None, snapper_file).unwrap();
+        solc.compile(
+            "contracts/Lock.sol",
+            &ProfileType::Debug,
+            "../target/solc-test/",
+        )
+        .unwrap();
     }
 }

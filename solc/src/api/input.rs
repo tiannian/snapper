@@ -267,19 +267,12 @@ pub struct CompilerInput {
 
 #[cfg(test)]
 mod test {
-    use tokio::runtime::Runtime;
-
     use crate::CompilerInput;
 
     #[test]
     fn test() {
         let config = include_str!("input.json");
 
-        let runtime = Runtime::new().unwrap();
-        runtime.block_on(async move {
-            let _input: CompilerInput = serde_json::from_str(&config).unwrap();
-
-            // println!("{:#?}", _input);
-        });
+        let _input: CompilerInput = serde_json::from_str(&config).unwrap();
     }
 }

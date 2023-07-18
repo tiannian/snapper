@@ -302,18 +302,13 @@ pub struct CompilerOutput {
 
 #[cfg(test)]
 mod test {
-    use tokio::runtime::Runtime;
-
     use crate::CompilerOutput;
 
     #[test]
     fn test() {
         let config = include_str!("output.json");
 
-        let runtime = Runtime::new().unwrap();
-        runtime.block_on(async move {
-            let _obj: CompilerOutput = serde_json::from_str(&config).unwrap();
-            // print!("{:#?}", obj);
-        });
+        let _obj: CompilerOutput = serde_json::from_str(&config).unwrap();
+        // print!("{:#?}", obj);
     }
 }
