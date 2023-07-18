@@ -6,6 +6,7 @@ use crate::ProfileType;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SnapperFile {
+    pub project: Project,
     pub solidity: Solidity,
     #[serde(default)]
     pub library: BTreeMap<String, BTreeMap<String, String>>,
@@ -19,6 +20,11 @@ impl SnapperFile {
             ProfileType::Release => &self.solidity.profiles.release,
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Project {
+    pub rename: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
