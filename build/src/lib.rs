@@ -63,8 +63,7 @@ impl Builder {
             ProfileType::from_str(&profile).map_err(|e| anyhow!("{e}"))?
         };
 
-        let target_dir = env::var("CARGO_TARGET_DIR")?;
-        let target_dir = Path::new(&target_dir);
+        let target_dir = temp_path();
         let package_name = env::var("CARGO_PKG_NAME")?;
         let filename = file.file_name().ok_or(anyhow!("Failed to get filename"))?;
 
@@ -91,8 +90,7 @@ impl Builder {
             let bin_path = if let Some(p) = &self.bin_path {
                 p.clone()
             } else {
-                let target_dir = env::var("CARGO_TARGET_DIR")?;
-                let target_dir = Path::new(&target_dir);
+                let target_dir = temp_path();
 
                 target_dir.join("bin")
             };
@@ -124,4 +122,8 @@ pub fn build() -> Result<()> {
     let builder = Builder::default();
 
     builder.build()
+}
+
+fn temp_path() -> PathBuf {
+    Path::new(env!("OUT_DIR")).to_path_buf()
 }
