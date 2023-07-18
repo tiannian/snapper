@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
-use anyhow::{anyhow, Result};
-use toml_edit::{Array, Document, InlineTable, Item, Value};
+use anyhow::Result;
+use toml_edit::{table, value, Array, Document};
 
 pub fn create(root: &Path) -> Result<()> {
     // --------
@@ -36,26 +36,22 @@ pub fn create(root: &Path) -> Result<()> {
         include_str!("../../assets/Snapper.toml"),
     )?;
 
-    let cts = fs::read_to_string(root.join("Cargo.toml"))?;
+    let cts_path = root.join("Cargo.toml");
+
+    let cts = fs::read_to_string(&cts_path)?;
     let mut cargo_toml = cts.parse::<Document>()?;
 
-    if let Some(item) = cargo_toml.get_mut("build-dependencies") {
-        let t = item
-            .as_table_mut()
-            .ok_or(anyhow!("Failed to parse Cargo.toml"))?;
+    cargo_toml["build-dependencies"] = table();
 
-        let mut snapper_dep = InlineTable::new();
+    let snapper = &mut cargo_toml["build-dependencies"]["snapper"];
+    snapper["version"] = value("0.1");
+    snapper["git"] = value("https://github.com/tiannian/snapper");
 
-        snapper_dep.insert("version", "0.1".into());
-        snapper_dep.insert("git", "https://github.com/tiannian/snapper".into());
+    let mut features = Array::new();
+    features.push("build");
+    snapper["features"] = value(features);
 
-        let mut features = Array::new();
-        features.push("build");
-
-        snapper_dep.insert("features", Value::Array(features));
-
-        t.insert("snapper", Item::Table(snapper_dep.into_table()));
-    }
+    fs::write(&cts_path, cargo_toml.to_string())?;
 
     Ok(())
 }
