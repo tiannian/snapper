@@ -1,15 +1,13 @@
 use std::{
-    env, fs,
+    env,
     path::{Path, PathBuf},
 };
 
 use anyhow::Result;
 use snapper_core::SnapperFile;
 
-pub fn load_snapper_file<P: AsRef<Path>>(path: P) -> Result<SnapperFile> {
-    let s = fs::read_to_string(path)?;
-
-    Ok(toml::from_str(&s)?)
+pub fn load_snapper_file(s: &str) -> Result<SnapperFile> {
+    Ok(toml::from_str(s)?)
 }
 
 pub fn solc_path(path: &Path, version: &str) -> Result<PathBuf> {

@@ -77,8 +77,10 @@ impl Builder {
         let snapper_path = if let Some(p) = &self.snapper_path {
             p.clone()
         } else {
-            PathBuf::from("./Snapper.toml")
+            PathBuf::from("Snapper.toml")
         };
+
+        println!("{:?}", snapper_path.canonicalize()?);
 
         let snapper = fs::read_to_string(snapper_path)?;
 
@@ -97,7 +99,7 @@ impl Builder {
         let contract_dir = if let Some(p) = &self.contract_path {
             p.clone()
         } else {
-            PathBuf::from("./contracts")
+            PathBuf::from("contracts")
         };
 
         self.walk_dir(&contract_dir, &solc)?;

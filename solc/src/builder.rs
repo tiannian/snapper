@@ -39,12 +39,9 @@ impl Solc {
 
         let platform = Platform::from_target().ok_or(anyhow!("No support platform"))?;
 
-        let out_dir = out_dir.as_ref();
+        fs::create_dir_all(&out_dir)?;
 
-        let bin_dir = out_dir.join("bin");
-        fs::create_dir_all(&bin_dir)?;
-
-        let solc_path = utils::solc_path(&bin_dir, &snapper.solidity.version)?;
+        let solc_path = utils::solc_path(out_dir.as_ref(), &snapper.solidity.version)?;
 
         if !solc_path.exists() {
             versions.download(&snapper.solidity.version, &platform, &solc_path)?;
@@ -208,7 +205,9 @@ mod tests {
         let out_dir = "../target";
         let snapper_file = "../cargo-snapper/assets/Snapper.toml";
 
-        let solc = Solc::new(out_dir, None, snapper_file).unwrap();
+        let sf = std::fs::read_to_string(snapper_file).unwrap();
+
+        let solc = Solc::new(out_dir, None, &sf).unwrap();
         solc.compile(
             "contracts/Lock.sol",
             &ProfileType::Debug,
