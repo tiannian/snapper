@@ -119,3 +119,9 @@ impl Builder {
         runtime.block_on(async move { self._build().await })
     }
 }
+
+pub fn build() -> Result<()> {
+    let builder = Builder::default();
+
+    builder.build()
+}
