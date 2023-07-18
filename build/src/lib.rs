@@ -109,6 +109,7 @@ impl Builder {
         self.walk_dir(&contract_dir, &solc).await?;
 
         // Generate lib from abi
+        /* let gen = MultiAbigen::from_json_files("")?; */
         Ok(())
     }
 

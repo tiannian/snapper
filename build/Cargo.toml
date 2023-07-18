@@ -11,3 +11,4 @@ async-recursion = "1.0.4"
 snapper-solc = { version = "0.1", path = "../solc" }
 snapper-core = { version = "0.1", path = "../core" }
 tokio = { version = "1.29.1", features = ["rt", "rt-multi-thread"] }
+ethers-contract-abigen = "2.0.7"
