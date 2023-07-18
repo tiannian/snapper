@@ -73,14 +73,13 @@ impl Builder {
         let out_dir = target_dir
             .join("snapper")
             .join("artifacts")
-            .join(package_name)
-            .join(filename);
+            .join(package_name);
 
         let contracts = solc.compile(file, &profile_type, &out_dir)?;
 
         // Abi generate.
         for c in contracts {
-            let abi_path = out_dir.join(format!("{c}.abi"));
+            let abi_path = out_dir.join(filename).join(format!("{c}.abi"));
 
             let target_file = env::var("OUT_DIR")?;
             let target_file = Path::new(&target_file).join(filename);
@@ -89,9 +88,9 @@ impl Builder {
             let target_file = target_file.join(format!("{c}.rs"));
 
             Abigen::new(c, abi_path.to_str().ok_or(anyhow!("Failed to get path"))?)
-                .map_err(|e| anyhow!("{e}"))?
+                .map_err(|e| anyhow!("New Failed: {e}"))?
                 .generate()
-                .map_err(|e| anyhow!("{e}"))?
+                .map_err(|e| anyhow!("Generate Failed: {e}"))?
                 .write_to_file(target_file)?;
         }
 
