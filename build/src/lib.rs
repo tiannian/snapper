@@ -60,7 +60,13 @@ impl Builder {
         };
 
         let target_dir = temp_path();
-        let package_name = env::var("CARGO_PKG_NAME")?;
+
+        let package_name = if let Some(name) = &solc.snapper.project.rename {
+            name.to_string()
+        } else {
+            env::var("CARGO_PKG_NAME")?
+        };
+
         let filename = file.file_name().ok_or(anyhow!("Failed to get filename"))?;
 
         let out_dir = target_dir

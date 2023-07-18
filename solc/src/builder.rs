@@ -20,7 +20,7 @@ use crate::{
 };
 
 pub struct Solc {
-    snapper: SnapperFile,
+    pub snapper: SnapperFile,
     solc_path: PathBuf,
 }
 
