@@ -77,6 +77,8 @@ impl Builder {
 
         let contracts = solc.compile(file, &profile_type, &out_dir)?;
 
+        /* let mut mod_str = format!("mod {} \{",); */
+
         // Abi generate.
         for c in contracts {
             let abi_path = out_dir.join(filename).join(format!("{c}.abi"));

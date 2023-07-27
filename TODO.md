@@ -6,6 +6,7 @@
 - [x] Use scratch to generate all state.
 - [x] Remove tokio for build script.
 - [x] Add auto generated include code in src.
+- [ ] Compile as single node.
 - [ ] Add All contract code in rust
 - [ ] Add test for embedded.
 - [ ] Add auto register network into snapper.

@@ -5,7 +5,7 @@ pub use version::CompilerVersions;
 mod api;
 pub use api::*;
 
-mod builder;
-pub use builder::*;
+mod solc;
+pub use solc::*;
 
 pub mod utils;
