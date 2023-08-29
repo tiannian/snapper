@@ -179,7 +179,7 @@ impl Solc {
                 let sourcemap = &contract.evm.bytecode.source_map.trim();
                 let gas = &contract.evm.gas_estimates;
 
-                let mut file = File::create(contract_dir.join(format!("{name}.abi")))?;
+                let mut file = File::create(contract_dir.join(format!("{name}.abi.json")))?;
                 file.write_all(serde_json::to_string(abi)?.as_bytes())?;
 
                 let mut file = File::create(contract_dir.join(format!("{name}.bytecode")))?;
@@ -188,7 +188,7 @@ impl Solc {
                 let mut file = File::create(contract_dir.join(format!("{name}.opcodes")))?;
                 file.write_all(opcodes.as_bytes())?;
 
-                let mut file = File::create(contract_dir.join(format!("{name}.gas")))?;
+                let mut file = File::create(contract_dir.join(format!("{name}.gas.json")))?;
                 file.write_all(serde_json::to_string(gas)?.as_bytes())?;
 
                 let mut file = File::create(contract_dir.join(format!("{name}.sourcemap")))?;

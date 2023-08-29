@@ -77,11 +77,9 @@ impl Builder {
 
         let contracts = solc.compile(file, &profile_type, &out_dir)?;
 
-        /* let mut mod_str = format!("mod {} \{",); */
-
         // Abi generate.
         for c in contracts {
-            let abi_path = out_dir.join(filename).join(format!("{c}.abi"));
+            let abi_path = out_dir.join(filename).join(format!("{c}.abi.json"));
 
             let target_file = env::var("OUT_DIR")?;
             let target_file = Path::new(&target_file).join(filename);
