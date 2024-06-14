@@ -6,7 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.71"
-snapper-solc = { version = "0.1", path = "../solc" }
-snapper-core = { version = "0.1", path = "../core" }
-ethers-contract-abigen = "2.0.7"
+anyhow.workspace = true
+snapper-solc.workspace = true
+snapper-core.workspace = true
+
+ethers-contract-abigen = { version = "2.0.7", optional = true }
+
+[features]
+default = ["eth-ethers"]
+eth-ethers = ["ethers-contract-abigen"]
+eth-alloy = []

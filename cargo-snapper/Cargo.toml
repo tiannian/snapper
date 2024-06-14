@@ -10,12 +10,12 @@ name = "snapper"
 path = "src/main.rs"
 
 [dependencies]
-log = "0.4.17"
-env_logger = "0.10.0"
-anyhow = { version = "1.0.71", features = ["backtrace"] }
-clap = { version = "4.2.7", features = ["derive"] }
+log.workspace = true
+env_logger.workspace = true
+anyhow.workspace = true
+clap.workspace = true
 
-cargo_metadata = "0.15.4"
+cargo_metadata.workspace = true
 
-toml_edit = "0.19.8"
-colored = "2.0.0"
+toml_edit.workspace = true
+colored.workspace = true
