@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
-members = ["cargo-snapper", "core", "build", "solc", "snapper"]
+# members = ["cargo-snapper", "core", "build", "solc", "snapper"]
+members = ["core"]
 
 [workspace.package]
 authors = ["tiannian <dtiannian@gmail.com>"]
@@ -8,8 +9,8 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace.dependencies]
-snapper-build = { version = "0.1", path = "build" }
-snapper-solc = { version = "0.1", path = "solc" }
+# snapper-build = { version = "0.1", path = "build" }
+# snapper-solc = { version = "0.1", path = "solc" }
 snapper-core = { version = "0.1", path = "core" }
 
 serde = { version = "1.0.163", features = ["derive"] }
@@ -24,3 +25,5 @@ cargo_metadata = "0.15.4"
 
 toml_edit = "0.19.8"
 colored = "2.0.0"
+
+tokio = { version = "1.38.0", features = ["full"] }

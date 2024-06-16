@@ -56,7 +56,7 @@ pub const REGISTER_URL: &str =
 impl CompilerVersions {
     /// Load version infomations from upstream
     ///
-    /// Default load info from github snapper repo
+    /// Default load info from ethereum github repo
     pub fn load() -> Result<Self> {
         Self::load_from(REGISTER_URL)
     }

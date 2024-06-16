@@ -9,6 +9,10 @@ edition = "2021"
 name = "snapper"
 path = "src/main.rs"
 
+[[bin]]
+name = "cargo-snapper"
+path = "src/main.rs"
+
 [dependencies]
 log.workspace = true
 env_logger.workspace = true

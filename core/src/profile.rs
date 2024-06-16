@@ -1,9 +1,12 @@
 use core::str::FromStr;
 
+use serde::{Deserialize, Serialize};
+
 use crate::{Error, Result};
 
-/// Profile
-#[derive(Debug, Clone)]
+/// Type of Profile
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum ProfileType {
     Debug,
     Release,

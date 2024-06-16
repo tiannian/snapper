@@ -1,11 +1,11 @@
-use alloc::{collections::BTreeMap, string::String, vec::Vec};
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
 use crate::ProfileType;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SnapperFile {
+pub struct SnapperConfig {
     pub project: Project,
     pub solidity: Solidity,
     #[serde(default)]
@@ -13,7 +13,7 @@ pub struct SnapperFile {
     pub networks: BTreeMap<String, Network>,
 }
 
-impl SnapperFile {
+impl SnapperConfig {
     pub fn get_solidity_profile(&self, profile: &ProfileType) -> &Profile {
         match profile {
             ProfileType::Debug => &self.solidity.profiles.debug,
@@ -22,9 +22,14 @@ impl SnapperFile {
     }
 }
 
+fn contracts_default() -> String {
+    "contracts".into()
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Project {
-    pub rename: Option<String>,
+    #[serde(default = "contracts_default")]
+    pub contracts: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

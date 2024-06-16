@@ -1,12 +1,15 @@
-#![no_std]
-
-extern crate alloc;
-
-mod snapper_file;
-pub use snapper_file::*;
+pub mod config;
+#[doc(inline)]
+pub use config::SnapperConfig;
 
 mod profile;
 pub use profile::*;
 
 mod error;
 pub use error::*;
+
+mod project;
+pub use project::*;
+
+mod platform;
+pub use platform::*;
