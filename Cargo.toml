@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 # members = ["cargo-snapper", "core", "build", "solc", "snapper"]
-members = ["core"]
+members = ["core", "solc"]
 
 [workspace.package]
 authors = ["tiannian <dtiannian@gmail.com>"]

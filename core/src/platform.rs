@@ -13,7 +13,7 @@ impl Platform {
         match self {
             Self::LinuxAmd64 => "linux-amd64",
             Self::WindowsAmd64 => "windows-amd64",
-            Self::MacOSAmd64 => "macos-amd64",
+            Self::MacOSAmd64 => "macosx-amd64",
         }
     }
 

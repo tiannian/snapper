@@ -3,7 +3,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use serde::{Deserialize, Serialize};
-use snapper_core::EvmVersion;
+use snapper_core::config::EvmVersion;
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub enum InputLanguage {

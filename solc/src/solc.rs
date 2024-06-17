@@ -7,7 +7,7 @@ use std::{
 };
 
 use anyhow::{anyhow, Result};
-use snapper_core::{ProfileType, SnapperFile};
+use snapper_core::{ProfileType, SnapperConfig};
 
 use crate::{
     input::{
@@ -20,7 +20,7 @@ use crate::{
 };
 
 pub struct Solc {
-    pub snapper: SnapperFile,
+    pub snapper: SnapperConfig,
     solc_path: PathBuf,
 }
 

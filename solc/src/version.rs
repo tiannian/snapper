@@ -1,72 +1,60 @@
 //! Version from upstream
 
-use std::{collections::HashMap, fs::OpenOptions, path::Path};
+use std::{collections::BTreeMap, fs::OpenOptions, path::Path};
 
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
+use snapper_core::Platform;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum Platform {
-    #[serde(rename = "windows-amd64")]
-    WindowsAmd64,
-    #[serde(rename = "linux-amd64")]
-    LinuxAmd64,
-    #[serde(rename = "macos-amd64")]
-    MacOSAmd64,
+struct List {
+    pub releases: Releases,
 }
 
-impl Platform {
-    pub fn to_str(&self) -> &'static str {
-        match self {
-            Self::LinuxAmd64 => "linux-amd64",
-            Self::WindowsAmd64 => "windows-amd64",
-            Self::MacOSAmd64 => "macos-amd64",
-        }
-    }
-
-    pub fn from_target() -> Option<Self> {
-        if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
-            Some(Self::LinuxAmd64)
-        } else if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
-            Some(Self::WindowsAmd64)
-        } else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
-            Some(Self::MacOSAmd64)
-        } else {
-            None
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Artifact {
-    pub urls: Vec<String>,
-    pub keccak256: String,
-    pub sha256: String,
-}
+type Releases = BTreeMap<String, String>;
 
 /// Version on upstream.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct CompilerVersions {
-    pub builds: HashMap<String, Artifact>,
+    linux_amd64: Releases,
+    windows_amd64: Releases,
+    macosx_amd64: Releases,
+
+    base: String,
 }
 
-pub const REGISTER_URL: &str =
-    "https://raw.githubusercontent.com/tiannian/snapper/main/utils/solidity.json";
+pub const REGISTER_BASE_URL: &str = "https://binaries.soliditylang.org";
+
+fn load_list(base: &str, platform: &Platform) -> Result<List> {
+    let url = format!("{}/{}/list.json", base, platform.to_str());
+
+    println!("{}", url);
+
+    let response = attohttpc::get(url).send()?;
+
+    Ok(response.json()?)
+}
 
 impl CompilerVersions {
     /// Load version infomations from upstream
     ///
     /// Default load info from ethereum github repo
     pub fn load() -> Result<Self> {
-        Self::load_from(REGISTER_URL)
+        Self::load_from(REGISTER_BASE_URL)
     }
 
-    pub fn load_from(upstream: &str) -> Result<Self> {
-        let response = attohttpc::get(upstream).send()?;
+    pub fn load_from(base: &str) -> Result<Self> {
+        let linux_amd64 = load_list(base, &Platform::LinuxAmd64)?.releases;
+        let windows_amd64 = load_list(base, &Platform::WindowsAmd64)?.releases;
+        let macosx_amd64 = load_list(base, &Platform::MacOSAmd64)?.releases;
 
-        let res = response.json()?;
+        Ok(Self {
+            linux_amd64,
+            windows_amd64,
+            macosx_amd64,
 
-        Ok(res)
+            base: base.into(),
+        })
     }
 
     /// Download solc binary
@@ -74,12 +62,19 @@ impl CompilerVersions {
         #[cfg(unix)]
         use std::os::unix::fs::OpenOptionsExt;
 
-        let artifact = self
-            .builds
-            .get(&format!("{}-{}", version, platform.to_str()))
-            .ok_or(anyhow!("No Target support"))?;
+        let releases = match platform {
+            Platform::LinuxAmd64 => &self.linux_amd64,
+            Platform::MacOSAmd64 => &self.macosx_amd64,
+            Platform::WindowsAmd64 => &self.windows_amd64,
+        };
 
-        let response = attohttpc::get(&artifact.urls[0]).send()?;
+        let filename = releases
+            .get(version)
+            .ok_or(anyhow!("No target solc version"))?;
+
+        let url = format!("{}/{}/{}", self.base, platform.to_str(), filename);
+
+        let response = attohttpc::get(url).send()?;
 
         let mut open = OpenOptions::new();
         open.write(true).create(true);
@@ -92,5 +87,17 @@ impl CompilerVersions {
         response.write_to(file)?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::CompilerVersions;
+
+    #[test]
+    fn test_load() {
+        let versions = CompilerVersions::load().unwrap();
+
+        println!("{:?}", versions);
     }
 }
