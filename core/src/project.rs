@@ -36,17 +36,38 @@ impl SnapperPackage {
     }
 
     /// Crate Snapper package from environment
-    pub async fn new_from_env(crate_path: impl AsRef<Path>) -> Result<Self> {
+    pub async fn new_from_path(crate_path: impl AsRef<Path>) -> Result<Self> {
         let config_path = crate_path.as_ref().join("Snapper.toml");
 
-        let metadata = MetadataCommand::new()
-            .no_deps()
-            .current_dir(crate_path.as_ref())
-            .exec()?;
+        let p = crate_path.as_ref().to_path_buf();
+
+        let metadata = tokio::task::spawn_blocking(move || {
+            MetadataCommand::new().no_deps().current_dir(p).exec()
+        })
+        .await??;
 
         let target_path = metadata.target_directory;
 
         Self::new(config_path, target_path).await
+    }
+
+    pub async fn new_from_name(name: &str) -> Result<Self> {
+        let metadata =
+            tokio::task::spawn_blocking(move || MetadataCommand::new().no_deps().exec()).await??;
+
+        for package in metadata.packages {
+            if package.name == name {
+                let config_path = package
+                    .manifest_path
+                    .parent()
+                    .ok_or(anyhow!("No parent found"))?
+                    .join("Snapper.toml");
+
+                return Self::new(config_path, metadata.target_directory).await;
+            }
+        }
+
+        Err(anyhow!("No target package found"))
     }
 
     /// Config of Snapper Package
